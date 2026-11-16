@@ -76,6 +76,17 @@ class TestAuth(unittest.TestCase):
         with mock.patch.object(auth, "_signing_key", lambda t: OTHER_KEY.public_key()):           # signature
             self.assertEqual(self.client.get("/me", headers=hdr()).status_code, 401)
 
+    def test_allow_list_restricts_users(self):
+        with mock.patch.dict("os.environ", {"EVALGUARD_ALLOWED_USER_IDS": "user_ok, user_other"}):
+            denied = self.client.get("/me", headers=hdr(sub="user_123"))
+            self.assertEqual(denied.status_code, 403)
+            self.assertIn("allow-list", denied.json()["detail"])
+            self.assertEqual(self.client.get("/me", headers=hdr(sub="user_ok")).status_code, 200)
+            self.assertEqual(self.client.get("/me", headers=hdr(sub="user_other")).status_code, 200)
+            self.assertEqual(self.client.get("/health").status_code, 200)  # public route is unaffected
+        # not configured: every signed-in user is allowed (documented default)
+        self.assertEqual(self.client.get("/me", headers=hdr(sub="user_123")).status_code, 200)
+
     def test_unconfigured_fails_closed_and_dev_bypass(self):
         with mock.patch.dict("os.environ", {"CLERK_PUBLISHABLE_KEY": "", "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": ""}):
             self.assertEqual(self.client.get("/me", headers=hdr()).status_code, 503)

@@ -165,6 +165,7 @@ def compare_domains():
 @app.post("/evaluate/run", status_code=202, dependencies=protected)
 def trigger_evaluation(req: EvalRunRequest):
     dom = _validate_domain(req.domain)
+    _check_model(req.model)
     kwargs = {"suite": req.suite, "question_limit": req.question_limit, "answer_model": req.model}
     if req.prompt_id:
         p = db.get_prompt(req.prompt_id)
@@ -430,6 +431,16 @@ def import_questions(body: QuestionImport):
 _models_cache: dict = {"at": 0.0, "data": []}
 
 
+def _check_model(model: Optional[str]) -> None:
+    """Reject model ids that could spend money: only the configured models, free (:free) models and the cached free list."""
+    if not model:
+        return
+    known = {settings.OPENROUTER_MODEL, settings.OPENROUTER_JUDGE_MODEL} | {x["id"] for x in _models_cache["data"]}
+    if model in known or model.endswith(":free"):
+        return
+    raise HTTPException(400, f"Model {model!r} isn't allowed: only free OpenRouter models (ids ending in ':free') can be selected")
+
+
 @app.get("/models/free", dependencies=protected)
 def free_models():
     """Free text models currently listed by OpenRouter (cached 10 min). Empty if the provider isn't OpenRouter."""
@@ -529,6 +540,7 @@ def create_experiment(req: ExperimentRequest):
         for v in req.variants:
             if not v.model:
                 raise HTTPException(422, f"Variant {v.label!r} needs a model")
+            _check_model(v.model)
             variants.append({"label": v.label.strip(), "prompt_id": p["id"], "prompt_name": p["name"],
                              "system_prompt": p["system_prompt"], "model": v.model})
 

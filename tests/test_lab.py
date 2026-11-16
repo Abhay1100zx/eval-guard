@@ -364,6 +364,24 @@ class TestLabApi(unittest.TestCase):
         runs = self.c.get(f"/experiments/{r.json()['experiment_id']}").json()["runs"]
         self.assertEqual({x["model_name"] for x in runs}, {"a/one:free", "b/two:free"})
 
+    def test_model_ids_are_restricted_to_free_models(self):
+        """A request must not be able to name a paid model and spend the owner's credits."""
+        with mock.patch.object(main.settings, "LLM_PROVIDER", "openrouter"), mock.patch.object(main, "EvaluationRunner", FakeRunner):
+            self.assertEqual(self.c.post("/evaluate/run", json={"domain": "hr", "model": "openai/gpt-5"}).status_code, 400)
+            paid_exp = {"name": "m", "kind": "model", "domain": "hr", "variants": [
+                {"label": "a", "model": "openai/gpt-5"}, {"label": "b", "model": "vendor/ok:free"}]}
+            r = self.c.post("/experiments", json=paid_exp)
+            self.assertEqual(r.status_code, 400)
+            self.assertIn("isn't allowed", r.json()["detail"])
+            self.assertEqual(self.c.get("/experiments").json()["experiments"], [])  # nothing was created
+
+            ok = self.c.post("/evaluate/run", json={"domain": "hr", "model": "vendor/some-model:free"})
+            self.assertEqual(ok.status_code, 202)
+            self._wait(ok.json()["job_id"])
+            configured = self.c.post("/evaluate/run", json={"domain": "hr", "model": main.settings.OPENROUTER_MODEL})
+            self.assertEqual(configured.status_code, 202)
+            self._wait(configured.json()["job_id"])
+
     def test_evaluate_run_accepts_suite_prompt_and_limit(self):
         seen = {}
 

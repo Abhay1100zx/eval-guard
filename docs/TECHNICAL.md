@@ -92,7 +92,7 @@ evalguard-ai/
 │   └── storage/database.py     All SQLite reading and writing
 ├── data/<domain>/              documents/, test_questions.json, adversarial_questions.json
 ├── scripts/                    run_eval.py, simulate_drift.py, validate_dataset.py, dev.ps1
-├── tests/                      59 automated tests
+├── tests/                      61 automated tests
 ├── web/                        The Next.js app (src/app = pages, src/components, src/lib)
 ├── docs/                       These guides and the demo material
 ├── .env.example                Template for your settings
@@ -255,6 +255,13 @@ CORS (which web addresses a browser lets call the API) only allows the addresses
 
 The API finds your Clerk domain from the publishable key. It reads it from `CLERK_PUBLISHABLE_KEY` or `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, and falls back to `web/.env.local`, which `clerk env pull` writes. The key itself is public by design; the **secret** key (`CLERK_SECRET_KEY`) is only used by the web app's server side and must never be committed.
 
+**Who is allowed in.** Out of the box, any person who can sign up through Clerk can use the whole app: run evaluations (which use your AI quota), upload documents, and edit or delete prompts and test cases. Everyone shares the same data. Before you share the link, do at least one of these:
+
+- Restrict sign-ups in the Clerk dashboard (for example an allow-list of email addresses), or
+- Set `EVALGUARD_ALLOWED_USER_IDS` in `.env` to the Clerk user ids you trust. The API then answers `403` to anyone else. If you lock yourself out, remove the setting and restart the API.
+
+**Which AI models a request may name.** The model choice sent from the app is checked on the server. Only your configured models and free OpenRouter models (ids ending in `:free`, or listed by `GET /models/free`) are accepted. Anything else is rejected with `400`, so nobody can use the API to spend paid credits.
+
 `EVALGUARD_AUTH_DISABLED=true` turns the checks off for local experiments. Never use it on a shared machine.
 
 ## 12. The web app
@@ -297,6 +304,7 @@ Set these in `.env` (project folder). Restart the API after changing them. Templ
 | `DRIFT_P_VALUE_THRESHOLD` | `0.05` | KS-test cut-off |
 | `CORS_ORIGINS` | the local web app | Web addresses allowed to call the API |
 | `CLERK_PUBLISHABLE_KEY`, `CLERK_AUTHORIZED_PARTIES` | from `web/.env.local`, local web app | Override the Clerk values the API uses |
+| `EVALGUARD_ALLOWED_USER_IDS` | empty (any signed-in user) | Comma-separated Clerk user ids allowed to use the API. Everyone else gets `403` |
 | `EVALGUARD_AUTH_DISABLED` | off | Skip sign-in checks (local experiments only) |
 
 The web app has its own settings in `web/.env` and `web/.env.local`: `NEXT_PUBLIC_API_URL` (default `http://127.0.0.1:8000`), the Clerk routes, and the Clerk keys written by `clerk env pull`.
@@ -307,15 +315,15 @@ The web app has its own settings in `web/.env` and `web/.env.local`: `NEXT_PUBLI
 .venv\Scripts\python.exe -m pytest tests -q
 ```
 
-59 tests, no internet or real AI needed (`tests/conftest.py` forces the mock provider so tests never read your real `.env`).
+61 tests, no internet or real AI needed (`tests/conftest.py` forces the mock provider so tests never read your real `.env`).
 
 | File | Covers |
 | --- | --- |
 | `test_metrics.py`, `test_drift.py` | Scores and the KS drift test |
 | `test_scorer_gating.py` | Scorer tags, comparable baselines, simulated runs, database upgrade |
 | `test_judge_and_clients.py` | Judge-reply parsing, stricter retrieval, chunk overlap, OpenRouter retries, quota handling |
-| `test_api.py` | Clerk token checks with real RSA-signed test tokens, browser access rules (CORS), jobs, uploads |
-| `test_lab.py` | Dataset integrity, safety scoring, prompts, custom questions, experiments, partial runs |
+| `test_api.py` | Clerk token checks with real RSA-signed test tokens, browser access rules (CORS), the user allow-list, jobs, uploads |
+| `test_lab.py` | Dataset integrity, safety scoring, prompts, custom questions, experiments, partial runs, free-model restriction |
 
 Frontend checks: `npx tsc --noEmit` and `npm run lint` in `web/`.
 
@@ -338,4 +346,5 @@ Frontend checks: `npx tsc --noEmit` and `npm run lint` in `web/`.
 - Free AI models are rate-limited per day, change over time and vary run to run.
 - The job list is in memory and the API uses one worker, so jobs are lost on restart and run one at a time.
 - Document upload only handles `.txt`, `.md` and `.pdf`.
+- All signed-in users share one workspace; there are no per-user or admin roles. Use the allow-list or Clerk sign-up restrictions to control who gets in.
 - Cost figures are estimates and ignore judge calls.

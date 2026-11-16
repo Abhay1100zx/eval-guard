@@ -3,6 +3,7 @@
 Configure with ONE of:
   CLERK_PUBLISHABLE_KEY   (pk_test_... / pk_live_...)  -> issuer + JWKS URL are derived from it
   CLERK_ISSUER + CLERK_JWKS_URL                         -> explicit
+Optional: EVALGUARD_ALLOWED_USER_IDS=user_abc,user_def limits the API to those Clerk users (everyone signed in otherwise).
 Set EVALGUARD_AUTH_DISABLED=true to bypass (local dev / tests only). Unconfigured = fail closed (503).
 """
 import base64
@@ -37,6 +38,11 @@ def _issuer_and_jwks() -> Optional[Tuple[str, str]]:
         if domain:
             return f"https://{domain}", f"https://{domain}/.well-known/jwks.json"
     return None
+
+
+def _allowed_user_ids() -> set:
+    """Clerk user ids allowed in. Empty (the default) means any signed-in user, so restrict sign-ups in Clerk too."""
+    return {u.strip() for u in _env("EVALGUARD_ALLOWED_USER_IDS").split(",") if u.strip()}
 
 
 def _authorized_parties() -> set:
@@ -80,7 +86,11 @@ def require_user(request: Request) -> Dict[str, Any]:
     scheme, _, token = header.partition(" ")
     if scheme.lower() != "bearer" or not token:
         raise HTTPException(401, "Missing bearer token")
-    return verify_token(token)
+    claims = verify_token(token)
+    allowed = _allowed_user_ids()
+    if allowed and claims.get("sub") not in allowed:
+        raise HTTPException(403, "Your account is not on this workspace's allow-list")
+    return claims
 
 
 CurrentUser = Depends(require_user)

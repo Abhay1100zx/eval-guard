@@ -152,7 +152,7 @@ This takes the latest real run, creates a deliberately bad copy, and runs the dr
 .venv\Scripts\python.exe -m pytest tests -q
 ```
 
-Expected: all tests pass (59 at the time of writing). Run one file:
+Expected: all tests pass (61 at the time of writing). Run one file:
 
 ```powershell
 .venv\Scripts\python.exe -m pytest tests\test_lab.py -q
@@ -200,6 +200,7 @@ Never commit `.env` or `web\.env.local`. They hold your keys and are already ign
 | Web app says "Clerk keys are missing" | `web\.env.local` doesn't exist | Run the Clerk steps in 1.4, then restart the web app |
 | Web app shows "Cannot reach the API" | The API isn't running | Start it (section 2) and check `/health` |
 | API returns 401 | Your sign-in expired or is missing | Sign in again in the browser |
+| API returns 403 "not on this workspace's allow-list" | `EVALGUARD_ALLOWED_USER_IDS` is set and your account is not in it | Add your Clerk user id, or remove the setting, then restart the API |
 | API returns 503 "Auth is not configured" | The API can't find the Clerk key | Check `web\.env.local` exists, then restart the API |
 | Run fails with "daily request limit" or `free-models-per-day` | The free AI quota for today is used up | Wait for 00:00 UTC, add credit to OpenRouter, or switch `LLM_PROVIDER` in `.env` |
 | A page shows "Mock LLM active" | No real AI key is set, so scores are fake | Set `LLM_PROVIDER` and the key in `.env`, restart the API |

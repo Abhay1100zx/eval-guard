@@ -126,6 +126,7 @@ docs/           Guides and demo material
 - 30 standard questions per domain is a small sample, so small score changes can be luck. The app says so.
 - The trick-question safety check looks for phrases, so a clever answer could slip past it.
 - Free AI models are limited per day and change over time. If you hit the daily limit, wait for 00:00 UTC, add credit on OpenRouter, or switch `LLM_PROVIDER` in `.env`.
+- **Anyone who can sign up can use the app**, including running evaluations and deleting prompts. Before sharing the link, restrict sign-ups in Clerk or set `EVALGUARD_ALLOWED_USER_IDS` in `.env` (see [docs/TECHNICAL.md](docs/TECHNICAL.md#11-sign-in-with-clerk)).
 - Without a real AI key the app uses a fake "mock" judge with fixed scores. It labels these clearly and leaves them out of the averages.
 
 ## Testing
@@ -134,4 +135,4 @@ docs/           Guides and demo material
 .venv\Scripts\python.exe -m pytest tests -q
 ```
 
-59 tests run without internet or a real AI. They cover scoring, drift, safe comparison rules, sign-in token checks, prompts, experiments, custom questions and browser access rules (CORS).
+61 tests run without internet or a real AI. They cover scoring, drift, safe comparison rules, sign-in token checks, prompts, experiments, custom questions and browser access rules (CORS).
