@@ -1,0 +1,24 @@
+# Apex Financial Group: Retail Banking Policies & Financial Guidelines
+
+[DISCLAIMER & SAFEGUARDS]
+This document contains synthetic guidelines for benchmark evaluation and educational purposes within EvalGuard AI. It does not constitute official financial advice or regulatory certification under banking authorities.
+
+## 1. Account Types and Fee Structures
+- Standard Checking: Requires a $25 minimum opening deposit. Monthly maintenance fee of $12 is waived with a minimum daily balance of $1,500 or direct deposits totaling >= $500/month.
+- High-Yield Savings: APY 4.25% variable. Requires $500 minimum balance to avoid a $5 monthly fee. Up to 6 complimentary withdrawals per statement cycle.
+- Overdraft Protection: Standard overdraft fee is $35 per item. Maximum of 3 overdraft fees per calendar day ($105 limit). Overdraft fees are not charged for transactions of $5 or less.
+
+## 2. Transfer Limits and Cutoff Times
+- Daily ATM Cash Withdrawal: $1,000 per card for standard checking accounts, and $3,000 for Apex Premier accounts.
+- Daily Debit Card Purchase Limit: $5,000 standard, $10,000 premier.
+- Domestic Wire Transfers: $25 fee. The same-day cutoff time is 4:00 PM Eastern Standard Time (EST).
+- International Wire Transfers: $45 fee plus applicable correspondent bank fees. Cutoff time is 2:00 PM EST.
+
+## 3. Lending & Credit Underwriting Criteria
+- Conventional Mortgages: Minimum credit score (FICO) of 620 required. Maximum Debt-to-Income (DTI) ratio allowed is 43%.
+- FHA Home Loans: Minimum credit score of 580 required for 3.5% down payment; scores between 500-579 require a 10% down payment.
+- Unsecured Personal Loans: Loan amounts range from $2,000 to $40,000 with APRs from 6.99% to 24.99%. Minimum credit score requirement is 660.
+
+## 4. AML and Regulatory Reporting
+- Currency Transaction Reports (CTR): Federal regulations require the bank to file a CTR (FinCEN Form 112) for each cash deposit, withdrawal, or exchange of currency exceeding $10,000 in a single business day.
+- Suspicious Activity Reports (SAR): Must be filed within 30 calendar days of initial detection of suspicious behavior involving amounts of $5,000 or more.

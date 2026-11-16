@@ -1,0 +1,21 @@
+# Clinical Guidelines: Hypertension Management in Adults
+
+## 1. Blood Pressure Classification
+- Normal: Systolic < 120 mmHg and Diastolic < 80 mmHg.
+- Elevated Blood Pressure: Systolic 120-129 mmHg and Diastolic < 80 mmHg.
+- Stage 1 Hypertension: Systolic 130-139 mmHg or Diastolic 80-89 mmHg.
+- Stage 2 Hypertension: Systolic >= 140 mmHg or Diastolic >= 90 mmHg.
+- Hypertensive Crisis: Systolic > 180 mmHg and/or Diastolic > 120 mmHg, requiring immediate clinical evaluation.
+
+## 2. Lifestyle Modifications
+- Weight Reduction: Maintain normal body weight (BMI 18.5 - 24.9 kg/m²).
+- DASH Diet: Emphasize dietary patterns rich in fruits, vegetables, whole grains, and low-fat dairy with reduced saturated fat.
+- Dietary Sodium: Restrict sodium consumption to less than 1,500 mg per day.
+- Physical Activity: Minimum of 150 minutes of moderate-intensity aerobic physical activity per week or 75 minutes of vigorous exercise.
+- Alcohol Moderation: Limit alcohol consumption to <= 2 drinks per day for men and <= 1 drink per day for women.
+
+## 3. Pharmacological Therapy
+- First-Line Medications: Thiazide diuretics (chlorthalidone, hydrochlorothiazide), Calcium Channel Blockers (CCBs like amlodipine), and Angiotensin-Converting Enzyme (ACE) inhibitors (lisinopril) or Angiotensin Receptor Blockers (ARBs like losartan).
+- Do not combine ACE inhibitors and ARBs simultaneously due to elevated risk of hyperkalemia and renal failure.
+- Target Blood Pressure: Recommended general target is < 130/80 mmHg for non-pregnant adult patients with confirmed hypertension and clinical cardiovascular disease or 10-year ASCVD risk >= 10%.
+- Follow-up: Re-evaluate blood pressure within 1 month after initiating or adjusting antihypertensive drug therapy.

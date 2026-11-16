@@ -1,0 +1,182 @@
+[
+  {
+    "id": "health_001",
+    "question": "What is the blood pressure threshold for Stage 1 Hypertension?",
+    "ground_truth": "Stage 1 Hypertension is defined as Systolic 130-139 mmHg or Diastolic 80-89 mmHg.",
+    "expected_keywords": ["130-139", "80-89", "Stage 1"]
+  },
+  {
+    "id": "health_002",
+    "question": "What is the daily sodium intake limit recommended under hypertension lifestyle modifications?",
+    "ground_truth": "Dietary sodium should be restricted to less than 1,500 mg per day.",
+    "expected_keywords": ["1,500 mg", "sodium", "less than"]
+  },
+  {
+    "id": "health_003",
+    "question": "Can ACE inhibitors and ARBs be prescribed together for hypertension treatment?",
+    "ground_truth": "No, ACE inhibitors and ARBs should not be combined simultaneously because of the elevated risk of hyperkalemia and renal failure.",
+    "expected_keywords": ["not combine", "hyperkalemia", "renal failure"]
+  },
+  {
+    "id": "health_004",
+    "question": "What is the fasting plasma glucose diagnostic cutoff for Type 2 Diabetes Mellitus?",
+    "ground_truth": "A Fasting Plasma Glucose (FPG) greater than or equal to 126 mg/dL (7.0 mmol/L) after an 8-hour fast is diagnostic of diabetes.",
+    "expected_keywords": ["126 mg/dL", "fasting", "8-hour"]
+  },
+  {
+    "id": "health_005",
+    "question": "What is the general HbA1c target for non-pregnant adult diabetes patients?",
+    "ground_truth": "The standard glycemic target for non-pregnant adults is an HbA1c less than 7.0%.",
+    "expected_keywords": ["7.0%", "HbA1c", "target"]
+  },
+  {
+    "id": "health_006",
+    "question": "When is Metformin contraindicated in patients with diabetes?",
+    "ground_truth": "Metformin is contraindicated when estimated glomerular filtration rate (eGFR) is less than 30 mL/min/1.73 m² due to risk of lactic acidosis.",
+    "expected_keywords": ["eGFR < 30", "lactic acidosis", "contraindicated"]
+  },
+  {
+    "id": "health_007",
+    "question": "What annual routine screenings are recommended for diabetes patients?",
+    "ground_truth": "Annual dilated eye exams for retinopathy, urine albumin-to-creatinine ratio (UACR) and eGFR for kidney disease, and comprehensive foot exams for neuropathy.",
+    "expected_keywords": ["eye exam", "retinopathy", "kidney", "foot exam"]
+  },
+  {
+    "id": "health_008",
+    "question": "What blood pressure reading constitutes a hypertensive crisis?",
+    "ground_truth": "A hypertensive crisis is defined as Systolic > 180 mmHg and/or Diastolic > 120 mmHg.",
+    "expected_keywords": ["> 180", "> 120", "hypertensive crisis"]
+  },
+  {
+    "id": "health_009",
+    "question": "What 2-hour plasma glucose value is diagnostic of diabetes during an oral glucose tolerance test, and how much glucose is given?",
+    "ground_truth": "A 2-hour plasma glucose >= 200 mg/dL (11.1 mmol/L) during a 75g Oral Glucose Tolerance Test (OGTT) is diagnostic of diabetes.",
+    "expected_keywords": ["200 mg/dL", "11.1 mmol/L", "75g"]
+  },
+  {
+    "id": "health_010",
+    "question": "What HbA1c level is diagnostic of diabetes, and what kind of assay must be used to measure it?",
+    "ground_truth": "A Glycated Hemoglobin (HbA1c) >= 6.5% (48 mmol/mol) is diagnostic, and it must be performed using a certified NGSP assay.",
+    "expected_keywords": ["6.5%", "48 mmol/mol", "NGSP assay"]
+  },
+  {
+    "id": "health_011",
+    "question": "When can a random plasma glucose of 200 mg/dL alone be used to diagnose diabetes?",
+    "ground_truth": "In symptomatic patients with classic hyperglycemia symptoms (polyuria, polydipsia, unexplained weight loss), a random plasma glucose >= 200 mg/dL is diagnostic.",
+    "expected_keywords": ["random plasma glucose", "polydipsia", "unexplained weight loss"]
+  },
+  {
+    "id": "health_012",
+    "question": "What are the recommended preprandial and peak postprandial capillary blood glucose targets for diabetes?",
+    "ground_truth": "Preprandial capillary blood glucose should be 80 - 130 mg/dL, and peak postprandial capillary blood glucose should be < 180 mg/dL.",
+    "expected_keywords": ["80 - 130 mg/dL", "Peak postprandial", "180 mg/dL"]
+  },
+  {
+    "id": "health_013",
+    "question": "For which patients may a less stringent HbA1c target such as below 8.0% be appropriate?",
+    "ground_truth": "Less stringent targets such as HbA1c < 8.0% may be appropriate for patients with limited life expectancy, extensive comorbid conditions, or high risk of severe hypoglycemia.",
+    "expected_keywords": ["HbA1c < 8.0%", "limited life expectancy", "severe hypoglycemia"]
+  },
+  {
+    "id": "health_014",
+    "question": "Which medication is the preferred initial pharmacologic agent for type 2 diabetes?",
+    "ground_truth": "Metformin is the preferred initial pharmacologic agent for the treatment of type 2 diabetes unless contraindicated.",
+    "expected_keywords": ["preferred initial pharmacologic agent", "unless contraindicated"]
+  },
+  {
+    "id": "health_015",
+    "question": "How far above target must baseline HbA1c be before early combination therapy should be considered?",
+    "ground_truth": "Early combination therapy should be considered if baseline HbA1c is 1.5% to 2.0% above target.",
+    "expected_keywords": ["Early combination therapy", "1.5% to 2.0%", "above target"]
+  },
+  {
+    "id": "health_016",
+    "question": "In which patients are SGLT2 inhibitors or GLP-1 receptor agonists recommended regardless of baseline HbA1c?",
+    "ground_truth": "In patients with established atherosclerotic cardiovascular disease (ASCVD), heart failure, or chronic kidney disease (CKD), SGLT2 inhibitors or GLP-1 receptor agonists with proven CVD benefit are recommended independently of baseline HbA1c.",
+    "expected_keywords": ["SGLT2 inhibitors", "heart failure", "independently of baseline HbA1c"]
+  },
+  {
+    "id": "health_017",
+    "question": "Which annual tests are used to screen for diabetic kidney disease?",
+    "ground_truth": "Diabetic kidney disease is screened annually with the urine albumin-to-creatinine ratio (UACR) and eGFR.",
+    "expected_keywords": ["urine albumin-to-creatinine ratio", "UACR", "diabetic kidney disease"]
+  },
+  {
+    "id": "health_018",
+    "question": "How is sensation assessed during the annual diabetic foot examination?",
+    "ground_truth": "The annual comprehensive foot examination assesses sensation with a 10g monofilament to detect peripheral neuropathy.",
+    "expected_keywords": ["10g monofilament", "peripheral neuropathy"]
+  },
+  {
+    "id": "health_019",
+    "question": "Which types of clinicians can perform the annual dilated eye exam for diabetic retinopathy?",
+    "ground_truth": "The annual comprehensive dilated eye exam for diabetic retinopathy is performed by an optometrist or ophthalmologist.",
+    "expected_keywords": ["dilated eye exam", "optometrist or ophthalmologist"]
+  },
+  {
+    "id": "health_020",
+    "question": "What systolic and diastolic values are classified as normal blood pressure?",
+    "ground_truth": "Normal blood pressure is Systolic < 120 mmHg and Diastolic < 80 mmHg.",
+    "expected_keywords": ["Systolic < 120 mmHg", "Diastolic < 80 mmHg"]
+  },
+  {
+    "id": "health_021",
+    "question": "How is elevated blood pressure defined, and how does it differ from Stage 1 hypertension?",
+    "ground_truth": "Elevated Blood Pressure is Systolic 120-129 mmHg and Diastolic < 80 mmHg, whereas Stage 1 Hypertension is Systolic 130-139 mmHg or Diastolic 80-89 mmHg.",
+    "expected_keywords": ["Elevated Blood Pressure", "120-129 mmHg", "130-139 mmHg"]
+  },
+  {
+    "id": "health_022",
+    "question": "What readings define Stage 2 hypertension?",
+    "ground_truth": "Stage 2 Hypertension is defined as Systolic >= 140 mmHg or Diastolic >= 90 mmHg.",
+    "expected_keywords": ["Stage 2 Hypertension", "Systolic >= 140 mmHg", "Diastolic >= 90 mmHg"]
+  },
+  {
+    "id": "health_023",
+    "question": "A patient has a systolic reading of 150 mmHg and a diastolic reading of 125 mmHg. Does this meet the hypertensive crisis definition, and what is required?",
+    "ground_truth": "Yes, a diastolic reading above 120 mmHg meets the hypertensive crisis definition (Systolic > 180 mmHg and/or Diastolic > 120 mmHg), which requires immediate clinical evaluation.",
+    "expected_keywords": ["and/or", "Diastolic > 120 mmHg", "immediate clinical evaluation"]
+  },
+  {
+    "id": "health_024",
+    "question": "What BMI range should be maintained as part of weight reduction for blood pressure control?",
+    "ground_truth": "Weight reduction aims to maintain normal body weight, with a BMI of 18.5 - 24.9 kg/m².",
+    "expected_keywords": ["Weight Reduction", "BMI 18.5 - 24.9 kg/m"]
+  },
+  {
+    "id": "health_025",
+    "question": "What food groups and dietary features does the DASH diet emphasize?",
+    "ground_truth": "The DASH diet emphasizes dietary patterns rich in fruits, vegetables, whole grains, and low-fat dairy with reduced saturated fat.",
+    "expected_keywords": ["DASH Diet", "low-fat dairy", "reduced saturated fat"]
+  },
+  {
+    "id": "health_026",
+    "question": "How much weekly aerobic physical activity is recommended, and what is the alternative if exercise is vigorous?",
+    "ground_truth": "A minimum of 150 minutes of moderate-intensity aerobic physical activity per week, or 75 minutes of vigorous exercise, is recommended.",
+    "expected_keywords": ["150 minutes", "moderate-intensity aerobic", "75 minutes of vigorous"]
+  },
+  {
+    "id": "health_027",
+    "question": "What daily alcohol limits are recommended for men and for women?",
+    "ground_truth": "Alcohol consumption should be limited to <= 2 drinks per day for men and <= 1 drink per day for women.",
+    "expected_keywords": ["Alcohol Moderation", "2 drinks per day for men", "1 drink per day for women"]
+  },
+  {
+    "id": "health_028",
+    "question": "Which drug classes are first-line medications for hypertension, and what example drugs are given?",
+    "ground_truth": "First-line medications are thiazide diuretics (chlorthalidone, hydrochlorothiazide), calcium channel blockers (such as amlodipine), and ACE inhibitors (lisinopril) or ARBs (such as losartan).",
+    "expected_keywords": ["Thiazide diuretics", "chlorthalidone", "amlodipine", "losartan"]
+  },
+  {
+    "id": "health_029",
+    "question": "What is the general blood pressure target for non-pregnant adults with confirmed hypertension and either clinical cardiovascular disease or elevated 10-year ASCVD risk?",
+    "ground_truth": "The recommended general target is < 130/80 mmHg for non-pregnant adult patients with confirmed hypertension and clinical cardiovascular disease or 10-year ASCVD risk >= 10%.",
+    "expected_keywords": ["< 130/80 mmHg", "10-year ASCVD risk", ">= 10%"]
+  },
+  {
+    "id": "health_030",
+    "question": "How soon should blood pressure be re-evaluated after starting or adjusting antihypertensive medication?",
+    "ground_truth": "Blood pressure should be re-evaluated within 1 month after initiating or adjusting antihypertensive drug therapy.",
+    "expected_keywords": ["Re-evaluate blood pressure", "within 1 month", "antihypertensive drug therapy"]
+  }
+]

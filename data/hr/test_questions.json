@@ -1,0 +1,182 @@
+[
+  {
+    "id": "hr_001",
+    "question": "How many days of annual PTO do employees receive and what is the monthly accrual rate?",
+    "ground_truth": "Full-time employees receive 18 days of PTO annually, accruing at a rate of 1.5 days per completed calendar month.",
+    "expected_keywords": ["18 days", "1.5 days", "PTO"]
+  },
+  {
+    "id": "hr_002",
+    "question": "What is the maximum number of unused PTO days that can roll over and what is the expiration deadline?",
+    "ground_truth": "A maximum of five (5) unused PTO days may roll over, and they must be used before March 31 or they expire.",
+    "expected_keywords": ["five (5) unused", "March 31", "rollover"]
+  },
+  {
+    "id": "hr_003",
+    "question": "How much paid parental leave is provided to a primary caregiver and what is the eligibility period?",
+    "ground_truth": "Primary caregivers receive sixteen (16) weeks of fully paid leave, eligible after six (6) months of continuous service.",
+    "expected_keywords": ["16 weeks", "6 months", "primary caregiver"]
+  },
+  {
+    "id": "hr_004",
+    "question": "What is the one-time home office setup stipend amount and submission deadline?",
+    "ground_truth": "A one-time reimbursement of $500 is available, which must be submitted within 90 days of hiring.",
+    "expected_keywords": ["$500", "90 days", "home office"]
+  },
+  {
+    "id": "hr_005",
+    "question": "What is the monthly connectivity allowance provided to remote employees?",
+    "ground_truth": "Remote employees receive a monthly recurring payroll stipend of $50 for home internet and mobile communications.",
+    "expected_keywords": ["$50", "monthly", "internet"]
+  },
+  {
+    "id": "hr_006",
+    "question": "How many paid sick days are provided and can they be cashed out upon separation?",
+    "ground_truth": "Employees receive ten (10) standalone paid sick days annually, which do not accrue and cannot be cashed out upon separation.",
+    "expected_keywords": ["10 standalone paid sick days", "cannot be cashed out"]
+  },
+  {
+    "id": "hr_007",
+    "question": "What is the standard duration and review frequency of a Performance Improvement Plan (PIP)?",
+    "ground_truth": "A formal PIP lasts sixty (60) calendar days with weekly checkpoints between manager and employee.",
+    "expected_keywords": ["60 calendar days", "weekly", "PIP"]
+  },
+  {
+    "id": "hr_008",
+    "question": "How many paid bereavement days are granted for the loss of an immediate family member?",
+    "ground_truth": "Employees are granted up to five (5) consecutive paid business days for the loss of an immediate family member.",
+    "expected_keywords": ["five (5) consecutive", "bereavement", "immediate family"]
+  },
+  {
+    "id": "hr_009",
+    "question": "How many weeks of paid parental leave does a secondary caregiver receive, and at what pay level?",
+    "ground_truth": "A secondary caregiver receives eight (8) weeks of 100% fully paid parental leave.",
+    "expected_keywords": ["eight (8) weeks", "100% fully paid"]
+  },
+  {
+    "id": "hr_010",
+    "question": "Within what time frame after a child's arrival can a secondary caregiver use their parental leave, and can it be taken in pieces?",
+    "ground_truth": "Secondary caregiver leave can be used continuously or in increments within twelve (12) months of arrival.",
+    "expected_keywords": ["in increments", "twelve (12) months of arrival"]
+  },
+  {
+    "id": "hr_011",
+    "question": "Which life events qualify an employee for primary caregiver parental leave?",
+    "ground_truth": "Primary caregiver parental leave is available for birth, adoption, or foster placement.",
+    "expected_keywords": ["birth, adoption, or foster placement", "Primary Caregiver Leave"]
+  },
+  {
+    "id": "hr_012",
+    "question": "Which family members count as immediate family for purposes of bereavement leave?",
+    "ground_truth": "Bereavement leave applies to immediate family members, listed as a spouse, child, parent, or sibling.",
+    "expected_keywords": ["spouse, child, parent, sibling", "Bereavement Leave"]
+  },
+  {
+    "id": "hr_013",
+    "question": "From what point can new employees use their paid sick days, and do those days accrue over time?",
+    "ground_truth": "Paid sick days are accessible immediately upon hire and do not accrue.",
+    "expected_keywords": ["accessible immediately upon hire", "do not accrue"]
+  },
+  {
+    "id": "hr_014",
+    "question": "What types of expenses can the one-time home office setup stipend be used for?",
+    "ground_truth": "The $500 one-time lump sum reimbursement covers ergonomics, desk, monitors, or office furniture.",
+    "expected_keywords": ["ergonomics, desk, monitors, or office furniture", "lump sum reimbursement"]
+  },
+  {
+    "id": "hr_015",
+    "question": "Does the connectivity allowance cover mobile communications as well as home internet, and how is it paid?",
+    "ground_truth": "Yes, the monthly recurring payroll stipend covers high-speed home internet and mobile communications.",
+    "expected_keywords": ["high-speed home internet and mobile communications", "payroll stipend"]
+  },
+  {
+    "id": "hr_016",
+    "question": "How many times per year are formal performance reviews held?",
+    "ground_truth": "Formal performance reviews occur twice annually.",
+    "expected_keywords": ["twice annually", "Formal reviews occur"]
+  },
+  {
+    "id": "hr_017",
+    "question": "What must an employee placed on a formal PIP accomplish during the plan period?",
+    "ground_truth": "An employee on a formal PIP must meet clearly delineated metrics within sixty (60) calendar days.",
+    "expected_keywords": ["clearly delineated metrics", "60 calendar days"]
+  },
+  {
+    "id": "hr_018",
+    "question": "How can employees report harassment or retaliation anonymously, and when is that channel available?",
+    "ground_truth": "Reports can be filed anonymously through the EthicsPoint hotline, which is available 24/7.",
+    "expected_keywords": ["EthicsPoint hotline", "24/7", "anonymously"]
+  },
+  {
+    "id": "hr_019",
+    "question": "What is the company's policy toward discriminatory harassment or retaliation?",
+    "ground_truth": "The company has a zero-tolerance policy for discriminatory harassment or retaliation.",
+    "expected_keywords": ["Zero-tolerance policy", "discriminatory harassment or retaliation"]
+  },
+  {
+    "id": "hr_020",
+    "question": "How many PTO days has a full-time employee accrued after six completed calendar months of active service?",
+    "ground_truth": "At 1.5 days per completed calendar month, six completed months of active service yields 9 days of PTO.",
+    "expected_keywords": ["1.5 days per completed calendar month", "active service"]
+  },
+  {
+    "id": "hr_021",
+    "question": "If an employee has eight unused PTO days at the end of the year, how many of them can roll over into the next year?",
+    "ground_truth": "Only a maximum of five (5) unused PTO days may roll over, so at most five of the eight can carry into the next year.",
+    "expected_keywords": ["maximum of five (5)", "roll over", "subsequent calendar year"]
+  },
+  {
+    "id": "hr_022",
+    "question": "Is an employee with four months of continuous service eligible for primary caregiver parental leave?",
+    "ground_truth": "No, primary caregiver leave is available only after six (6) months of continuous service, so an employee with four months is not yet eligible.",
+    "expected_keywords": ["after six (6) months", "continuous service"]
+  },
+  {
+    "id": "hr_023",
+    "question": "How many total paid days off per year do full-time employees get from PTO and standalone sick leave combined?",
+    "ground_truth": "Full-time employees receive eighteen (18) days of PTO plus ten (10) standalone paid sick days, for a combined 28 days per year.",
+    "expected_keywords": ["eighteen (18) days", "ten (10) standalone"]
+  },
+  {
+    "id": "hr_024",
+    "question": "How many more weeks of fully paid parental leave does a primary caregiver receive than a secondary caregiver?",
+    "ground_truth": "A primary caregiver receives sixteen (16) weeks versus eight (8) weeks for a secondary caregiver, which is eight weeks more.",
+    "expected_keywords": ["Sixteen (16) weeks", "Eight (8) weeks"]
+  },
+  {
+    "id": "hr_025",
+    "question": "Which category of employees receives the 18-day annual PTO allotment?",
+    "ground_truth": "Full-time employees receive eighteen (18) days of PTO per calendar year.",
+    "expected_keywords": ["Full-time employees", "per calendar year"]
+  },
+  {
+    "id": "hr_026",
+    "question": "How do the home office setup stipend and the connectivity allowance differ in how they are paid out?",
+    "ground_truth": "The home office setup stipend is a one-time lump sum reimbursement of $500, whereas the connectivity allowance is a monthly recurring payroll stipend of $50.",
+    "expected_keywords": ["One-time lump sum", "Monthly recurring payroll stipend"]
+  },
+  {
+    "id": "hr_027",
+    "question": "Which month holds the annual compensation review, and what is the June review called?",
+    "ground_truth": "The annual compensation review takes place in December, and the June review is the mid-year check-in.",
+    "expected_keywords": ["December (annual compensation review)", "June (mid-year check-in)"]
+  },
+  {
+    "id": "hr_028",
+    "question": "What is the name of the company whose employee handbook sets out these leave and workplace policies?",
+    "ground_truth": "The handbook belongs to Apex Global Enterprise.",
+    "expected_keywords": ["Apex Global Enterprise", "Employee Handbook"]
+  },
+  {
+    "id": "hr_029",
+    "question": "Which has a waiting period before it can be used: paid sick leave or primary caregiver parental leave?",
+    "ground_truth": "Primary caregiver parental leave requires six (6) months of continuous service, while paid sick days are accessible immediately upon hire.",
+    "expected_keywords": ["accessible immediately upon hire", "six (6) months of continuous service"]
+  },
+  {
+    "id": "hr_030",
+    "question": "Are bereavement leave days counted as calendar days or business days, and do they have to be taken consecutively?",
+    "ground_truth": "Bereavement leave is up to five (5) consecutive paid business days.",
+    "expected_keywords": ["consecutive paid business days", "Up to five (5)"]
+  }
+]

@@ -1,0 +1,182 @@
+[
+  {
+    "id": "edu_001",
+    "question": "What is the minimum attendance percentage required to avoid an attendance warning at Apex University?",
+    "ground_truth": "Students must attend at least 75% of scheduled class and lab sessions. Falling below 75% without leave triggers an attendance warning.",
+    "expected_keywords": ["75%", "attendance", "warning", "sessions"]
+  },
+  {
+    "id": "edu_002",
+    "question": "How many credit hours are required for an undergraduate student to be considered full-time?",
+    "ground_truth": "Undergraduate students must take a minimum of 12 credit hours per semester to maintain full-time student status.",
+    "expected_keywords": ["12 credit hours", "minimum", "full-time"]
+  },
+  {
+    "id": "edu_003",
+    "question": "What happens if a student on academic probation fails to reach a 2.0 GPA after two consecutive semesters?",
+    "ground_truth": "The student faces academic suspension for one full academic calendar year.",
+    "expected_keywords": ["suspension", "one full academic calendar year", "two consecutive probation semesters"]
+  },
+  {
+    "id": "edu_004",
+    "question": "Until what week of the semester can a student withdraw from a course and receive a W grade?",
+    "ground_truth": "Students may withdraw between Week 3 and the end of Week 10 to receive a grade of W on their transcript.",
+    "expected_keywords": ["Week 10", "grade of \"W\"", "transcript"]
+  },
+  {
+    "id": "edu_005",
+    "question": "What are the designated quiet hours in residence halls on weekdays?",
+    "ground_truth": "Sunday through Thursday quiet hours are from 10:00 PM to 8:00 AM.",
+    "expected_keywords": ["10:00 PM", "8:00 AM", "Sunday through Thursday"]
+  },
+  {
+    "id": "edu_006",
+    "question": "What is the consequence of a first-time honor code violation involving unauthorized AI plagiarism?",
+    "ground_truth": "The student receives a zero grade on the assignment or exam, must attend a mandatory ethics workshop, and has a written notice in their student record.",
+    "expected_keywords": ["zero grade", "ethics workshop", "written notification"]
+  },
+  {
+    "id": "edu_007",
+    "question": "Are pets allowed in the residence hall rooms?",
+    "ground_truth": "Pets are prohibited, with exceptions only for registered service animals and non-carnivorous fish in tanks under 10 gallons.",
+    "expected_keywords": ["prohibited", "service animals", "fish", "10 gallons"]
+  },
+  {
+    "id": "edu_008",
+    "question": "How long may an overnight guest stay in a residence hall per visit?",
+    "ground_truth": "Residents may host overnight guests for up to three (3) consecutive nights and a maximum of six (6) nights per calendar month.",
+    "expected_keywords": ["three (3) consecutive nights", "six (6) nights", "calendar month"]
+  },
+  {
+    "id": "edu_009",
+    "question": "What are the quiet hours in residence halls on Friday and Saturday?",
+    "ground_truth": "Quiet hours on Friday through Saturday run from 12:00 Midnight to 9:00 AM.",
+    "expected_keywords": ["Friday through Saturday", "12:00 Midnight", "9:00 AM"]
+  },
+  {
+    "id": "edu_010",
+    "question": "How do quiet hours change during finals week?",
+    "ground_truth": "During finals week, 24-hour quiet hours are enforced throughout all university residence buildings.",
+    "expected_keywords": ["24-hour quiet hours", "finals week", "all university residence buildings"]
+  },
+  {
+    "id": "edu_011",
+    "question": "When are Courtesy Hours in effect, and what must residents do when asked?",
+    "ground_truth": "Courtesy Hours are in effect 24 hours a day, 7 days a week, and residents must lower sound levels if politely requested by neighbors or Resident Advisors (RAs).",
+    "expected_keywords": ["24 hours a day", "7 days a week", "lower sound levels"]
+  },
+  {
+    "id": "edu_012",
+    "question": "What must be done before an overnight visitor arrives in a residence hall?",
+    "ground_truth": "All overnight visitors must be registered with the front hall desk and approved by all roommates prior to arrival.",
+    "expected_keywords": ["front hall desk", "approved by all roommates", "prior to arrival"]
+  },
+  {
+    "id": "edu_013",
+    "question": "What is the penalty if an unregistered guest is found in a room after 11:00 PM?",
+    "ground_truth": "The host resident receives a $50 fine when an unregistered guest is found after 11:00 PM.",
+    "expected_keywords": ["$50 fine", "11:00 PM", "host resident"]
+  },
+  {
+    "id": "edu_014",
+    "question": "How often are scheduled room inspections held, and how much advance notice is given?",
+    "ground_truth": "Scheduled room inspections occur twice per semester with at least 48 hours advance email notice.",
+    "expected_keywords": ["twice per semester", "48 hours", "email notice"]
+  },
+  {
+    "id": "edu_015",
+    "question": "What happens to a resident who possesses a prohibited cooking appliance in a residence hall room?",
+    "ground_truth": "Possession of prohibited cooking appliances carries a $100 fine and immediate confiscation.",
+    "expected_keywords": ["$100 fine", "immediate confiscation", "prohibited cooking appliances"]
+  },
+  {
+    "id": "edu_016",
+    "question": "During which part of the semester can residents submit room change requests?",
+    "ground_truth": "Room change requests open after the third week of the semester and close at the end of Week 11.",
+    "expected_keywords": ["third week", "end of Week 11", "Room change requests"]
+  },
+  {
+    "id": "edu_017",
+    "question": "Which meal plans must first-year residents living on campus choose between?",
+    "ground_truth": "All first-year residents living on campus must subscribe to either the Unlimited Dining or the 14-Meals-Per-Week Plan.",
+    "expected_keywords": ["first-year residents", "Unlimited Dining", "14-Meals-Per-Week Plan"]
+  },
+  {
+    "id": "edu_018",
+    "question": "What is the standard course load per semester at Apex University?",
+    "ground_truth": "The standard course load is 15 to 18 credit hours per semester.",
+    "expected_keywords": ["standard course load", "15 to 18 credit hours"]
+  },
+  {
+    "id": "edu_019",
+    "question": "What is required to enroll in more than 18 credit hours in a semester?",
+    "ground_truth": "Enrolling in more than 18 credit hours requires approval from the Department Chair and a minimum cumulative GPA of 3.5.",
+    "expected_keywords": ["Department Chair", "3.5", "minimum cumulative GPA"]
+  },
+  {
+    "id": "edu_020",
+    "question": "What can happen if a student's enrollment drops below 12 credit hours?",
+    "ground_truth": "Dropping below 12 credit hours changes enrollment status to part-time, which may impact financial aid, university housing eligibility, and visa status for international students.",
+    "expected_keywords": ["part-time", "financial aid", "housing eligibility", "visa status"]
+  },
+  {
+    "id": "edu_021",
+    "question": "How long does a student have to improve attendance after an attendance warning, and what happens if they fail to do so?",
+    "ground_truth": "A student who fails to improve attendance within two weeks of the warning receives an automatic administrative withdrawal (\"WA\") or a failing grade (\"F\").",
+    "expected_keywords": ["within two weeks", "administrative withdrawal", "failing grade"]
+  },
+  {
+    "id": "edu_022",
+    "question": "How soon must excused absences be documented, and where are they submitted?",
+    "ground_truth": "Excused absences must be documented and submitted to the Dean's Office within 5 business days of returning to campus.",
+    "expected_keywords": ["Dean's Office", "5 business days", "returning to campus"]
+  },
+  {
+    "id": "edu_023",
+    "question": "What is the minimum cumulative GPA required to graduate with a Bachelor's degree?",
+    "ground_truth": "The minimum cumulative GPA required to graduate with a Bachelor's degree is 2.0.",
+    "expected_keywords": ["required to graduate", "Bachelor's degree", "2.0"]
+  },
+  {
+    "id": "edu_024",
+    "question": "How many grade points does a B+ earn compared with a D on the 4.0 scale?",
+    "ground_truth": "On the 4.0 scale, a B+ is worth 3.3 grade points and a D is worth 1.0.",
+    "expected_keywords": ["4.0 scale", "B+ (3.3)", "D (1.0)"]
+  },
+  {
+    "id": "edu_025",
+    "question": "Under what condition is a student placed on Academic Probation, and for how long?",
+    "ground_truth": "Any student whose semester GPA or cumulative GPA falls below 2.0 is placed on Academic Probation for the subsequent semester.",
+    "expected_keywords": ["semester GPA or cumulative GPA", "falls below 2.0", "subsequent semester"]
+  },
+  {
+    "id": "edu_026",
+    "question": "How long is the Add/Drop Period, and are there penalties for using it?",
+    "ground_truth": "During the first two weeks (14 calendar days) of the semester, students may freely add or drop courses without penalty or record on their transcript.",
+    "expected_keywords": ["Add/Drop Period", "14 calendar days", "without penalty"]
+  },
+  {
+    "id": "edu_027",
+    "question": "Are space heaters or air conditioners permitted in residence hall rooms?",
+    "ground_truth": "No, space heaters and air conditioners are listed among the prohibited items in residence hall rooms.",
+    "expected_keywords": ["space heaters", "air conditioners", "Prohibited items"]
+  },
+  {
+    "id": "edu_028",
+    "question": "Under what circumstances can a student withdraw from a course after Week 10?",
+    "ground_truth": "No withdrawals are permitted after Week 10, except in documented extenuating circumstances approved by the Academic Appeals Committee.",
+    "expected_keywords": ["after Week 10", "extenuating circumstances", "Academic Appeals Committee"]
+  },
+  {
+    "id": "edu_029",
+    "question": "What are the consequences of a second academic dishonesty offense?",
+    "ground_truth": "A second offense results in automatic failure (\"XF\") in the course and referral to the Disciplinary Hearing Board.",
+    "expected_keywords": ["automatic failure", "XF", "Disciplinary Hearing Board"]
+  },
+  {
+    "id": "edu_030",
+    "question": "What is the penalty for a third academic integrity offense at Apex University?",
+    "ground_truth": "A third offense results in immediate permanent expulsion from the university.",
+    "expected_keywords": ["Third offense", "Immediate permanent expulsion"]
+  }
+]

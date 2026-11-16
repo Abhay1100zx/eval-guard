@@ -1,0 +1,182 @@
+[
+  {
+    "id": "leg_001",
+    "question": "What is the standard confidentiality duration under the NDA policy?",
+    "ground_truth": "Confidential Information must be protected for three (3) years from the date of disclosure, while trade secrets must be maintained in confidence perpetually.",
+    "expected_keywords": ["three (3) years", "trade secrets", "perpetually"]
+  },
+  {
+    "id": "leg_002",
+    "question": "Under what conditions is information excluded from confidentiality obligations?",
+    "ground_truth": "Information is excluded if already public without breach, known prior to disclosure, received lawfully from a third party, or required to be disclosed by judicial subpoena with written notice.",
+    "expected_keywords": ["public domain", "prior", "subpoena", "third party"]
+  },
+  {
+    "id": "leg_003",
+    "question": "Which arbitration body and venue govern contract disputes?",
+    "ground_truth": "Disputes are governed by the American Arbitration Association (AAA) under Commercial Arbitration Rules, seated in New York City and governed by New York state law.",
+    "expected_keywords": ["American Arbitration Association", "AAA", "New York"]
+  },
+  {
+    "id": "leg_004",
+    "question": "What is the mandatory timeline for notifying supervisory authorities about a personal data breach?",
+    "ground_truth": "The Data Protection Officer must notify supervisory authorities without undue delay and not later than 72 hours after becoming aware of the breach.",
+    "expected_keywords": ["72 hours", "supervisory authorities", "data breach"]
+  },
+  {
+    "id": "leg_005",
+    "question": "What is the SLA deadline for fulfilling GDPR/CCPA data access and deletion requests?",
+    "ground_truth": "Data access, correction, and deletion requests must be completed within thirty (30) calendar days of verified identity.",
+    "expected_keywords": ["30 calendar days", "deletion", "GDPR"]
+  },
+  {
+    "id": "leg_006",
+    "question": "Are class action lawsuits permitted under the dispute resolution policy?",
+    "ground_truth": "No, parties expressly waive any right to bring or participate in class, collective, or representative proceedings.",
+    "expected_keywords": ["waive", "class action", "representative"]
+  },
+  {
+    "id": "leg_007",
+    "question": "Who owns intellectual property created by employees within their scope of work?",
+    "ground_truth": "All software code, patents, and copyrightable works created within scope of work are Works Made for Hire owned exclusively by the company.",
+    "expected_keywords": ["Works Made for Hire", "exclusively", "company"]
+  },
+  {
+    "id": "leg_008",
+    "question": "What is the liquidated damages penalty for unauthorized intentional data exfiltration by a vendor?",
+    "ground_truth": "The liquidated damages amount is $250,000 per verified incident without prejudice to further actual damages.",
+    "expected_keywords": ["$250,000", "liquidated damages", "exfiltration"]
+  },
+  {
+    "id": "leg_009",
+    "question": "Which GDPR articles and which California privacy laws are covered by the data subject rights SLA?",
+    "ground_truth": "The data subject rights SLA covers requests under GDPR Article 15-22 and under CCPA/CPRA.",
+    "expected_keywords": ["Article 15-22", "CCPA/CPRA", "GDPR"]
+  },
+  {
+    "id": "leg_010",
+    "question": "How long must trade secrets be kept confidential, and what qualifier applies to that duration?",
+    "ground_truth": "Trade secrets must be maintained in strict confidence perpetually or for as long as permissible by applicable state and federal law.",
+    "expected_keywords": ["perpetually", "applicable state and federal law"]
+  },
+  {
+    "id": "leg_011",
+    "question": "If a recipient is compelled to disclose Confidential Information, which compulsions qualify for the exclusion and what must the recipient provide to the discloser?",
+    "ground_truth": "Disclosure required by judicial subpoena or regulatory mandate is excluded from confidentiality, provided the recipient gives the discloser prompt written notice.",
+    "expected_keywords": ["judicial subpoena", "regulatory mandate", "prompt written notice"]
+  },
+  {
+    "id": "leg_012",
+    "question": "Is information a recipient received from a third party automatically excluded from confidentiality obligations?",
+    "ground_truth": "Not automatically: information is excluded only if it was received from a third party without restriction.",
+    "expected_keywords": ["received from a third party without restriction", "Exclusions from Confidentiality"]
+  },
+  {
+    "id": "leg_013",
+    "question": "Does information that became public because the recipient breached the NDA still count as excluded from confidentiality?",
+    "ground_truth": "No, the public domain exclusion applies only to information that was already in the public domain without breach, so information made public through a breach is not excluded.",
+    "expected_keywords": ["public domain without breach", "Exclusions from Confidentiality"]
+  },
+  {
+    "id": "leg_014",
+    "question": "Which kinds of work product are deemed Works Made for Hire, and does this apply to contractors as well as employees?",
+    "ground_truth": "Software code, documentation, patents, and copyrightable works authored by employees or contractors within the scope of work are deemed Works Made for Hire owned exclusively by the company.",
+    "expected_keywords": ["software code, documentation, patents", "employees or contractors", "Works Made for Hire"]
+  },
+  {
+    "id": "leg_015",
+    "question": "What must be done when open-source software or prior inventions are incorporated into a deliverable?",
+    "ground_truth": "Any prior inventions or open-source software incorporated into deliverables must be explicitly listed on Schedule A.",
+    "expected_keywords": ["open-source software", "explicitly listed on Schedule A"]
+  },
+  {
+    "id": "leg_016",
+    "question": "Is the license granted for pre-existing IP exclusive, time-limited, or royalty-bearing?",
+    "ground_truth": "No, pre-existing IP incorporated into deliverables must be licensed under non-exclusive, perpetual, royalty-free terms.",
+    "expected_keywords": ["non-exclusive, perpetual, royalty-free", "licensed under"]
+  },
+  {
+    "id": "leg_017",
+    "question": "Which claims must be resolved through arbitration, and what form must that arbitration take?",
+    "ground_truth": "All claims and disputes arising out of contracts must be resolved through binding individual arbitration.",
+    "expected_keywords": ["All claims and disputes", "binding individual arbitration"]
+  },
+  {
+    "id": "leg_018",
+    "question": "Do conflict of law principles affect which state's law governs the agreement?",
+    "ground_truth": "No, the agreement is governed by the laws of the State of New York without regard to conflict of law principles.",
+    "expected_keywords": ["conflict of law principles", "State of New York"]
+  },
+  {
+    "id": "leg_019",
+    "question": "In what capacities and kinds of proceedings does the class action waiver bar a party from bringing claims?",
+    "ground_truth": "Parties waive any right to bring claims as class representative or class member in any class, collective, or representative proceeding.",
+    "expected_keywords": ["class representative or class member", "collective, or representative proceeding"]
+  },
+  {
+    "id": "leg_020",
+    "question": "Who is responsible for notifying supervisory authorities, and what type of breach triggers that duty?",
+    "ground_truth": "The Data Protection Officer (DPO) must notify supervisory authorities in the event of a confirmed personal data breach.",
+    "expected_keywords": ["Data Protection Officer", "DPO", "confirmed personal data breach"]
+  },
+  {
+    "id": "leg_021",
+    "question": "Is the 72-hour breach notification deadline absolute, and from what moment is it measured?",
+    "ground_truth": "Notification must be made without undue delay and, where feasible, not later than seventy-two (72) hours after becoming aware of the breach, so the 72-hour limit applies where feasible and runs from awareness.",
+    "expected_keywords": ["without undue delay", "where feasible", "after becoming aware"]
+  },
+  {
+    "id": "leg_022",
+    "question": "A customer's identity is verified on June 1 and they have requested deletion of their data. By when must the request be fulfilled?",
+    "ground_truth": "The deletion request must be fulfilled within thirty (30) calendar days of verified identity, so by July 1.",
+    "expected_keywords": ["30 calendar days", "verified identity", "deletion"]
+  },
+  {
+    "id": "leg_023",
+    "question": "Who is subject to the liquidated damages clause, and what conduct triggers it?",
+    "ground_truth": "Vendors are subject to liquidated damages of $250,000 per verified incident for unauthorized intentional data exfiltration.",
+    "expected_keywords": ["vendors", "intentional data exfiltration", "$250,000"]
+  },
+  {
+    "id": "leg_024",
+    "question": "Does paying the liquidated damages for a data exfiltration incident cap the vendor's total liability?",
+    "ground_truth": "No, the liquidated damages are without prejudice to further actual damages, so the vendor can still owe additional actual damages.",
+    "expected_keywords": ["without prejudice to further actual damages", "liquidated damages"]
+  },
+  {
+    "id": "leg_025",
+    "question": "If a vendor commits three separate verified intentional data exfiltration incidents, how much in liquidated damages is owed?",
+    "ground_truth": "Liquidated damages are $250,000 per verified incident, so three verified incidents total $750,000, without prejudice to further actual damages.",
+    "expected_keywords": ["$250,000 per verified incident", "liquidated damages"]
+  },
+  {
+    "id": "leg_026",
+    "question": "Does this document constitute formal legal counsel or an attorney-client relationship?",
+    "ground_truth": "No, the document does not constitute formal legal counsel, attorney-client representation, or statutory certification.",
+    "expected_keywords": ["formal legal counsel", "attorney-client representation", "statutory certification"]
+  },
+  {
+    "id": "leg_027",
+    "question": "What is the stated origin and purpose of the contract and compliance standards in this document?",
+    "ground_truth": "The document contains synthetic contract and compliance standards created specifically for the EvalGuard AI benchmark suite.",
+    "expected_keywords": ["synthetic contract and compliance standards", "EvalGuard AI benchmark suite"]
+  },
+  {
+    "id": "leg_028",
+    "question": "Which company issues the Corporate Legal, Contracts and Regulatory Compliance Policy?",
+    "ground_truth": "The policy is issued by Apex Technologies Corp.",
+    "expected_keywords": ["Apex Technologies Corp", "Regulatory Compliance Policy"]
+  },
+  {
+    "id": "leg_029",
+    "question": "A recipient was given Confidential Information that included a trade secret on January 15, 2021. In February 2026, is it still bound as to each category?",
+    "ground_truth": "The three (3) year term for Confidential Information ran out on January 15, 2024, but trade secrets must still be maintained in confidence perpetually or for as long as permissible by applicable state and federal law.",
+    "expected_keywords": ["three (3) years", "trade secrets", "perpetually"]
+  },
+  {
+    "id": "leg_030",
+    "question": "Which is the longer window: fulfilling a data subject request or notifying supervisory authorities of a confirmed breach?",
+    "ground_truth": "Data subject requests must be fulfilled within thirty (30) calendar days of verified identity, which is longer than the not-later-than seventy-two (72) hours after awareness allowed for notifying supervisory authorities of a confirmed breach.",
+    "expected_keywords": ["30 calendar days", "72 hours", "supervisory authorities"]
+  }
+]

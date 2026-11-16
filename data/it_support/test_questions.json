@@ -1,0 +1,182 @@
+[
+  {
+    "id": "it_001",
+    "question": "What HTTP status code and response headers are returned when an API client exceeds its rate limit?",
+    "ground_truth": "The API returns HTTP 429 Too Many Requests along with `Retry-After: <seconds>` and `X-RateLimit-Reset` headers.",
+    "expected_keywords": ["429", "Too Many Requests", "Retry-After"]
+  },
+  {
+    "id": "it_002",
+    "question": "What is the token expiration lifespan for OAuth 2.0 JWT access tokens and refresh tokens?",
+    "ground_truth": "Access tokens expire after sixty (60) minutes, while refresh tokens have a 30-day sliding window validity with token rotation.",
+    "expected_keywords": ["60 minutes", "30-day", "refresh token"]
+  },
+  {
+    "id": "it_003",
+    "question": "What is the initial response SLA and resolution target for a Severity 1 (P1) incident?",
+    "ground_truth": "P1 Critical incidents require an initial response within fifteen (15) minutes and target mitigation/resolution within four (4) hours.",
+    "expected_keywords": ["15 minutes", "4 hours", "P1"]
+  },
+  {
+    "id": "it_004",
+    "question": "How often must service-to-service API keys be rotated?",
+    "ground_truth": "API keys must be rotated at least every 90 days, or revoked immediately if compromised.",
+    "expected_keywords": ["90 days", "rotated", "revoked"]
+  },
+  {
+    "id": "it_005",
+    "question": "What is the recommended maximum connection pool size for PostgreSQL containers?",
+    "ground_truth": "The recommended maximum pool size is twenty (20) connections per container instance with a 300-second idle timeout.",
+    "expected_keywords": ["20 connections", "300 seconds", "PostgreSQL"]
+  },
+  {
+    "id": "it_006",
+    "question": "What is the rate limit for Tier 1 developer accounts?",
+    "ground_truth": "Tier 1 developer accounts are limited to 100 requests per minute with a burst capability of 150 requests.",
+    "expected_keywords": ["100 requests per minute", "150 requests", "Tier 1"]
+  },
+  {
+    "id": "it_007",
+    "question": "What security mechanism and certificate duration are required for production bastion SSH access?",
+    "ground_truth": "FIDO2/WebAuthn hardware keys and ephemeral 8-hour certificates from HashiCorp Vault are required.",
+    "expected_keywords": ["FIDO2", "8-hour", "Vault"]
+  },
+  {
+    "id": "it_008",
+    "question": "What Redis cache eviction policy is configured in production?",
+    "ground_truth": "Production Redis is configured with `volatile-lru` eviction policy and alerts at 80% RAM utilization.",
+    "expected_keywords": ["volatile-lru", "80% RAM", "Redis"]
+  },
+  {
+    "id": "it_009",
+    "question": "What request rate and burst capability does the Tier 2 (Enterprise) plan provide?",
+    "ground_truth": "Tier 2 (Enterprise) allows 2,500 requests per minute with burst capability up to 3,500 requests.",
+    "expected_keywords": ["2,500 requests per minute", "3,500 requests", "Tier 2"]
+  },
+  {
+    "id": "it_010",
+    "question": "How many items does a list endpoint return per page by default when no limit is specified?",
+    "ground_truth": "The default page size for list endpoints is 20 items.",
+    "expected_keywords": ["default is 20 items", "list endpoints"]
+  },
+  {
+    "id": "it_011",
+    "question": "A client calls a list endpoint with limit=250. Does that stay within the pagination maximum?",
+    "ground_truth": "No, the maximum `limit` parameter for list endpoints is 100 items per page, so 250 exceeds the allowed maximum.",
+    "expected_keywords": ["100 items per page", "list endpoints", "Maximum limit parameter"]
+  },
+  {
+    "id": "it_012",
+    "question": "An Enterprise client spikes to 4,000 requests in a minute. Is that within its burst capability?",
+    "ground_truth": "No, Tier 2 (Enterprise) burst capability only goes up to 3,500 requests, so 4,000 requests exceeds it.",
+    "expected_keywords": ["3,500 requests", "burst capability", "Tier 2"]
+  },
+  {
+    "id": "it_013",
+    "question": "Is the Tier 1 rate limit counted per user account, per API key, or per IP address?",
+    "ground_truth": "The Tier 1 (Free / Developer) limit of 100 requests per minute is applied per IP address.",
+    "expected_keywords": ["per IP address", "100 requests per minute"]
+  },
+  {
+    "id": "it_014",
+    "question": "What format do the OAuth 2.0 Bearer access tokens use?",
+    "ground_truth": "OAuth 2.0 Bearer access tokens are signed JWTs.",
+    "expected_keywords": ["signed JWTs", "OAuth 2.0 Bearer Tokens"]
+  },
+  {
+    "id": "it_015",
+    "question": "An OAuth 2.0 access token was issued 75 minutes ago. Is it still within its lifespan?",
+    "ground_truth": "No, access tokens have an expiration lifespan of sixty (60) minutes, so a token issued 75 minutes ago has expired.",
+    "expected_keywords": ["60 minutes", "expiration lifespan", "signed JWTs"]
+  },
+  {
+    "id": "it_016",
+    "question": "Can the same refresh token be redeemed more than once?",
+    "ground_truth": "No, refresh tokens can only be used once because of token rotation, and each has a 30-day sliding window validity.",
+    "expected_keywords": ["used once", "token rotation", "Refresh tokens"]
+  },
+  {
+    "id": "it_017",
+    "question": "Where must a compromised API key be revoked, and how quickly?",
+    "ground_truth": "Compromised keys must be immediately revoked via the Developer Console.",
+    "expected_keywords": ["immediately revoked", "Developer Console", "Compromised keys"]
+  },
+  {
+    "id": "it_018",
+    "question": "A service-to-service API key was last rotated 100 days ago. Does that meet the rotation policy?",
+    "ground_truth": "No, service-to-service keys must be rotated at least every 90 days, so a key last rotated 100 days ago is overdue.",
+    "expected_keywords": ["at least every 90 days", "Service-to-service keys"]
+  },
+  {
+    "id": "it_019",
+    "question": "What kinds of problems and user-impact threshold define a Severity 1 (P1 - Critical) incident?",
+    "ground_truth": "A P1 - Critical incident is a production outage or severe data corruption impacting more than 25% of users.",
+    "expected_keywords": ["Production outage", "severe data corruption", "25% of users"]
+  },
+  {
+    "id": "it_020",
+    "question": "What initial response SLA and target resolution apply to a Severity 2 (P2) incident?",
+    "ground_truth": "For P2 - Major incidents the initial response SLA is one (1) hour and the target resolution is twelve (12) hours.",
+    "expected_keywords": ["1 hour", "12 hours", "Severity 2"]
+  },
+  {
+    "id": "it_021",
+    "question": "What condition qualifies an incident as Severity 2 (P2 - Major)?",
+    "ground_truth": "Severity 2 (P2 - Major) applies when a core workflow is degraded with no immediate workaround.",
+    "expected_keywords": ["Core workflow degraded", "no immediate workaround", "Major"]
+  },
+  {
+    "id": "it_022",
+    "question": "A non-critical bug affects only a few users and a workaround is available. Which severity applies and what is the response SLA?",
+    "ground_truth": "It is Severity 3 (P3 - Minor), whose response SLA is twenty-four (24) business hours.",
+    "expected_keywords": ["Non-critical bugs", "workarounds", "24 business hours"]
+  },
+  {
+    "id": "it_023",
+    "question": "How many more hours does the target resolution for a P2 incident allow compared with a P1 incident?",
+    "ground_truth": "P2 target resolution is twelve (12) hours versus four (4) hours for P1, so P2 allows 8 more hours.",
+    "expected_keywords": ["12 hours", "4 hours", "target resolution"]
+  },
+  {
+    "id": "it_024",
+    "question": "If a service runs 3 container instances, what is the recommended maximum number of PostgreSQL connections across all of them?",
+    "ground_truth": "The recommended maximum pool size is twenty (20) connections per container instance, so 3 instances total 60 connections.",
+    "expected_keywords": ["20 connections per container instance", "maximum pool size"]
+  },
+  {
+    "id": "it_025",
+    "question": "Is the Redis Cluster 80% RAM threshold applied per node or globally, and what happens when it is reached?",
+    "ground_truth": "It is a global memory threshold limit of 80% RAM, and reaching it triggers an automated alert.",
+    "expected_keywords": ["global memory threshold", "80% RAM", "automated alert"]
+  },
+  {
+    "id": "it_026",
+    "question": "Can an engineer SSH directly into a production cluster using only a password?",
+    "ground_truth": "No, direct SSH access to production clusters requires hardware security keys (FIDO2/WebAuthn) and ephemeral 8-hour certificates issued via HashiCorp Vault.",
+    "expected_keywords": ["Direct SSH access", "hardware security keys", "FIDO2/WebAuthn"]
+  },
+  {
+    "id": "it_027",
+    "question": "Which rate-limit tier is for Free / Developer users and which is for Enterprise customers?",
+    "ground_truth": "Tier 1 is for Free / Developer users and Tier 2 is for Enterprise customers.",
+    "expected_keywords": ["Tier 1 (Free / Developer)", "Tier 2 (Enterprise)"]
+  },
+  {
+    "id": "it_028",
+    "question": "For a P1 incident, must the 4-hour target end in full resolution, or is mitigation enough?",
+    "ground_truth": "The P1 target is resolution or mitigation within four (4) hours, so mitigation alone satisfies it.",
+    "expected_keywords": ["resolution or mitigation", "4 hours", "P1"]
+  },
+  {
+    "id": "it_029",
+    "question": "Which severity levels have an initial response SLA of one hour or less?",
+    "ground_truth": "P1 has an initial response SLA of fifteen (15) minutes and P2 has one (1) hour, while P3 is twenty-four (24) business hours, so only P1 and P2 are within one hour.",
+    "expected_keywords": ["15 minutes", "1 hour", "Initial response SLA"]
+  },
+  {
+    "id": "it_030",
+    "question": "How long can a PostgreSQL connection sit idle before it is timed out?",
+    "ground_truth": "The idle connection timeout is set to 300 seconds.",
+    "expected_keywords": ["300 seconds", "Idle connection timeout"]
+  }
+]

@@ -1,0 +1,182 @@
+[
+  {
+    "id": "bank_001",
+    "question": "What is the overdraft fee and what is the maximum number of overdraft charges allowed per day?",
+    "ground_truth": "The standard overdraft fee is $35 per item, with a daily maximum of 3 overdraft fees ($105 limit). Overdraft fees are waived on transactions of $5 or less.",
+    "expected_keywords": ["$35", "maximum of 3", "$105"]
+  },
+  {
+    "id": "bank_002",
+    "question": "What is the daily ATM cash withdrawal limit for standard checking accounts?",
+    "ground_truth": "The daily ATM cash withdrawal limit is $1,000 per card for standard checking accounts.",
+    "expected_keywords": ["$1,000", "standard checking"]
+  },
+  {
+    "id": "bank_003",
+    "question": "What is the cutoff time and fee for domestic wire transfers?",
+    "ground_truth": "Domestic wire transfers incur a $25 fee, with a same-day cutoff time of 4:00 PM Eastern Standard Time (EST).",
+    "expected_keywords": ["$25", "4:00 PM", "Eastern Standard Time"]
+  },
+  {
+    "id": "bank_004",
+    "question": "What is the minimum credit score required for a conventional mortgage and what is the maximum DTI ratio?",
+    "ground_truth": "A minimum FICO credit score of 620 is required for conventional mortgages, with a maximum Debt-to-Income (DTI) ratio of 43%.",
+    "expected_keywords": ["620", "43%", "Debt-to-Income"]
+  },
+  {
+    "id": "bank_005",
+    "question": "At what cash transaction threshold must a Currency Transaction Report (CTR) be filed?",
+    "ground_truth": "A CTR must be filed for any cash deposit, withdrawal, or currency exchange exceeding $10,000 in a single business day.",
+    "expected_keywords": ["$10,000", "CTR", "single business day"]
+  },
+  {
+    "id": "bank_006",
+    "question": "How can the $12 monthly maintenance fee on a standard checking account be waived?",
+    "ground_truth": "The monthly fee is waived with a minimum daily balance of $1,500 or direct deposits totaling at least $500 per month.",
+    "expected_keywords": ["$1,500", "$500", "direct deposits"]
+  },
+  {
+    "id": "bank_007",
+    "question": "What credit score is needed to qualify for an FHA home loan with a 3.5% down payment?",
+    "ground_truth": "A minimum credit score of 580 is required to qualify for an FHA home loan with a 3.5% down payment.",
+    "expected_keywords": ["580", "3.5%", "FHA"]
+  },
+  {
+    "id": "bank_008",
+    "question": "Within how many days must a Suspicious Activity Report (SAR) be filed?",
+    "ground_truth": "A SAR must be filed within 30 calendar days of initial detection of suspicious activity of $5,000 or more.",
+    "expected_keywords": ["30 calendar days", "SAR", "$5,000"]
+  },
+  {
+    "id": "bank_009",
+    "question": "How much is the minimum opening deposit for a Standard Checking account?",
+    "ground_truth": "A Standard Checking account requires a $25 minimum opening deposit.",
+    "expected_keywords": ["$25 minimum opening deposit", "Standard Checking"]
+  },
+  {
+    "id": "bank_010",
+    "question": "What APY does the High-Yield Savings account offer, and is that rate fixed or variable?",
+    "ground_truth": "The High-Yield Savings account offers an APY of 4.25%, and the rate is variable rather than fixed.",
+    "expected_keywords": ["APY 4.25% variable", "High-Yield Savings"]
+  },
+  {
+    "id": "bank_011",
+    "question": "What balance must be maintained in a High-Yield Savings account to avoid the monthly fee, and how much is that fee?",
+    "ground_truth": "A High-Yield Savings account requires a $500 minimum balance to avoid a $5 monthly fee.",
+    "expected_keywords": ["$500 minimum balance", "$5 monthly fee"]
+  },
+  {
+    "id": "bank_012",
+    "question": "How many complimentary withdrawals does a High-Yield Savings account allow in each statement cycle?",
+    "ground_truth": "A High-Yield Savings account allows up to 6 complimentary withdrawals per statement cycle.",
+    "expected_keywords": ["6 complimentary withdrawals", "statement cycle"]
+  },
+  {
+    "id": "bank_013",
+    "question": "Would an overdraft fee be charged on a $4 transaction that overdraws a checking account?",
+    "ground_truth": "No, overdraft fees are not charged for transactions of $5 or less, so a $4 transaction would not incur the $35 fee.",
+    "expected_keywords": ["not charged for transactions of $5 or less", "$35 per item"]
+  },
+  {
+    "id": "bank_014",
+    "question": "If a customer overdraws five separate items in one calendar day, what is the most they can be charged in overdraft fees?",
+    "ground_truth": "A maximum of 3 overdraft fees is charged per calendar day, so the most the customer can be charged is $105 (3 fees at $35 each).",
+    "expected_keywords": ["3 overdraft fees per calendar day", "$105 limit", "$35 per item"]
+  },
+  {
+    "id": "bank_015",
+    "question": "What is the daily ATM cash withdrawal limit for Apex Premier accounts?",
+    "ground_truth": "Apex Premier accounts have a daily ATM cash withdrawal limit of $3,000.",
+    "expected_keywords": ["$3,000", "Apex Premier"]
+  },
+  {
+    "id": "bank_016",
+    "question": "What are the daily debit card purchase limits for standard and premier accounts?",
+    "ground_truth": "The daily debit card purchase limit is $5,000 for standard accounts and $10,000 for premier accounts.",
+    "expected_keywords": ["$5,000 standard", "$10,000 premier"]
+  },
+  {
+    "id": "bank_017",
+    "question": "What fee applies to an international wire transfer, and what else may be added on top of it?",
+    "ground_truth": "International wire transfers carry a $45 fee plus applicable correspondent bank fees.",
+    "expected_keywords": ["$45 fee", "correspondent bank fees"]
+  },
+  {
+    "id": "bank_018",
+    "question": "By what time must an international wire transfer be submitted to meet the cutoff?",
+    "ground_truth": "The cutoff time for international wire transfers is 2:00 PM EST.",
+    "expected_keywords": ["2:00 PM EST", "International Wire Transfers"]
+  },
+  {
+    "id": "bank_019",
+    "question": "How much earlier is the international wire cutoff time than the domestic same-day wire cutoff?",
+    "ground_truth": "The international wire cutoff is 2:00 PM EST, which is two hours earlier than the domestic same-day cutoff of 4:00 PM EST.",
+    "expected_keywords": ["2:00 PM EST", "4:00 PM Eastern Standard Time"]
+  },
+  {
+    "id": "bank_020",
+    "question": "What down payment is required for an FHA home loan if the applicant's credit score falls between 500 and 579?",
+    "ground_truth": "FHA applicants with credit scores between 500-579 require a 10% down payment.",
+    "expected_keywords": ["500-579", "10% down payment"]
+  },
+  {
+    "id": "bank_021",
+    "question": "What range of loan amounts can be borrowed with an unsecured personal loan?",
+    "ground_truth": "Unsecured personal loan amounts range from $2,000 to $40,000.",
+    "expected_keywords": ["$2,000 to $40,000", "Unsecured Personal Loans"]
+  },
+  {
+    "id": "bank_022",
+    "question": "What APR range and minimum credit score apply to unsecured personal loans?",
+    "ground_truth": "Unsecured personal loans carry APRs from 6.99% to 24.99% and require a minimum credit score of 660.",
+    "expected_keywords": ["6.99% to 24.99%", "660"]
+  },
+  {
+    "id": "bank_023",
+    "question": "Could an applicant with a FICO score of 600 qualify for a conventional mortgage?",
+    "ground_truth": "No, conventional mortgages require a minimum credit score (FICO) of 620, so a score of 600 falls below the requirement.",
+    "expected_keywords": ["Conventional Mortgages", "FICO) of 620"]
+  },
+  {
+    "id": "bank_024",
+    "question": "Which FinCEN form number is used to file a Currency Transaction Report?",
+    "ground_truth": "A CTR is filed using FinCEN Form 112.",
+    "expected_keywords": ["FinCEN Form 112", "Currency Transaction Reports"]
+  },
+  {
+    "id": "bank_025",
+    "question": "Does a cash deposit of exactly $10,000 in a single business day require a CTR filing?",
+    "ground_truth": "No, a CTR is required only for cash transactions exceeding $10,000 in a single business day, so a deposit of exactly $10,000 does not exceed the threshold.",
+    "expected_keywords": ["exceeding $10,000", "single business day"]
+  },
+  {
+    "id": "bank_026",
+    "question": "What dollar amount of suspicious behavior triggers the requirement to file a Suspicious Activity Report?",
+    "ground_truth": "A SAR must be filed for suspicious behavior involving amounts of $5,000 or more.",
+    "expected_keywords": ["suspicious behavior", "$5,000 or more"]
+  },
+  {
+    "id": "bank_027",
+    "question": "From what point does the 30-day filing period for a Suspicious Activity Report start counting?",
+    "ground_truth": "The 30 calendar day filing period for a SAR starts from the initial detection of the suspicious behavior.",
+    "expected_keywords": ["30 calendar days", "initial detection"]
+  },
+  {
+    "id": "bank_028",
+    "question": "A Standard Checking customer keeps a $1,200 daily balance but receives $600 in direct deposits each month. Is the $12 monthly maintenance fee waived?",
+    "ground_truth": "Yes, the $12 fee is waived because direct deposits totaling at least $500 per month qualify, even though the $1,200 balance is below the $1,500 minimum daily balance.",
+    "expected_keywords": ["direct deposits totaling", "$500/month", "$1,500"]
+  },
+  {
+    "id": "bank_029",
+    "question": "Which requires a higher minimum credit score, a conventional mortgage or an unsecured personal loan, and what are the two scores?",
+    "ground_truth": "An unsecured personal loan requires the higher minimum credit score of 660, compared with 620 for a conventional mortgage.",
+    "expected_keywords": ["620", "660", "Minimum credit score"]
+  },
+  {
+    "id": "bank_030",
+    "question": "Does the Apex Financial Group policy document constitute official financial advice?",
+    "ground_truth": "No, the document contains synthetic guidelines for benchmark evaluation and educational purposes and does not constitute official financial advice or regulatory certification.",
+    "expected_keywords": ["synthetic guidelines", "official financial advice"]
+  }
+]

@@ -1,0 +1,291 @@
+[
+  {
+    "id": "trv_001",
+    "question": "What are the standard check-in and check-out times?",
+    "ground_truth": "Standard check-in is at 3:00 PM local time, and standard check-out is at 11:00 AM local time.",
+    "expected_keywords": [
+      "3:00 PM",
+      "11:00 AM",
+      "check-in",
+      "check-out"
+    ]
+  },
+  {
+    "id": "trv_002",
+    "question": "What is the cancellation deadline to avoid a penalty fee under flexible rates?",
+    "ground_truth": "Reservations may be cancelled without penalty up to forty-eight (48) hours prior to the 3:00 PM check-in date.",
+    "expected_keywords": [
+      "48 hours",
+      "without penalty",
+      "cancellation"
+    ]
+  },
+  {
+    "id": "trv_003",
+    "question": "What is the penalty charge for a late check-out after 3:00 PM?",
+    "ground_truth": "Check-outs after 3:00 PM incur a full night's room charge.",
+    "expected_keywords": [
+      "full night's room charge",
+      "after 3:00 PM"
+    ]
+  },
+  {
+    "id": "trv_004",
+    "question": "What is the pet policy, weight limit, and non-refundable fee?",
+    "ground_truth": "Up to two (2) dogs under 50 pounds each are permitted with a $50 non-refundable fee per stay. Service animals stay free.",
+    "expected_keywords": [
+      "two (2) domestic dogs",
+      "50 pounds",
+      "$50"
+    ]
+  },
+  {
+    "id": "trv_005",
+    "question": "What is the fee assessed for violating the non-smoking policy?",
+    "ground_truth": "A $300 deep-cleaning sanitization fee is automatically billed for smoking violations in rooms or balconies.",
+    "expected_keywords": [
+      "$300",
+      "non-smoking",
+      "deep-cleaning"
+    ]
+  },
+  {
+    "id": "trv_006",
+    "question": "How long is complimentary luggage storage available on the departure day?",
+    "ground_truth": "Complimentary luggage storage is provided for up to twelve (12) hours on arrival and departure dates.",
+    "expected_keywords": [
+      "12 hours",
+      "luggage storage",
+      "complimentary"
+    ]
+  },
+  {
+    "id": "trv_007",
+    "question": "What meal voucher amount is provided for flight delays exceeding 4 hours?",
+    "ground_truth": "A $50 meal voucher per passenger is provided if a connecting flight/transfer is delayed more than four (4) hours.",
+    "expected_keywords": [
+      "$50 meal voucher",
+      "4 hours",
+      "delay"
+    ]
+  },
+  {
+    "id": "trv_008",
+    "question": "What is the penalty for a no-show or late cancellation within 48 hours?",
+    "ground_truth": "Failure to arrive or cancelling within 48 hours results in a penalty equal to one (1) night room rate plus taxes.",
+    "expected_keywords": [
+      "one (1) night room rate",
+      "no-show",
+      "within 48 hours"
+    ]
+  },
+  {
+    "id": "trv_009",
+    "question": "How much is the early arrival fee, and before what time does it apply?",
+    "ground_truth": "Early check-in before 1:00 PM is subject to availability and a $35 early arrival fee.",
+    "expected_keywords": [
+      "before 1:00 PM",
+      "$35 early arrival fee",
+      "subject to availability"
+    ]
+  },
+  {
+    "id": "trv_010",
+    "question": "How is a late check-out between 12:00 PM and 3:00 PM billed?",
+    "ground_truth": "Late check-out between 12:00 PM and 3:00 PM is billed at $25 per hour.",
+    "expected_keywords": [
+      "$25 per hour",
+      "between 12:00 PM and 3:00 PM"
+    ]
+  },
+  {
+    "id": "trv_011",
+    "question": "How does the charge differ for a guest who checks out at 1:00 PM versus one who checks out at 4:00 PM?",
+    "ground_truth": "A 1:00 PM check-out falls in the 12:00 PM to 3:00 PM late check-out window and is billed at $25 per hour, whereas a check-out after 3:00 PM, such as 4:00 PM, incurs a full night's room charge.",
+    "expected_keywords": [
+      "$25 per hour",
+      "full night's room charge",
+      "after 3:00 PM"
+    ]
+  },
+  {
+    "id": "trv_012",
+    "question": "A guest arrives at 10:00 AM. What would early check-in cost, and is there a charge to store their luggage?",
+    "ground_truth": "Early check-in before 1:00 PM is subject to availability and a $35 early arrival fee, while luggage holding is complimentary for up to twelve (12) hours on the day of arrival.",
+    "expected_keywords": [
+      "$35 early arrival fee",
+      "Complimentary luggage holding",
+      "twelve (12) hours"
+    ]
+  },
+  {
+    "id": "trv_013",
+    "question": "A guest arrives at 12:30 PM and on departure leaves at 2:00 PM. Which fees does the policy attach to each of these times?",
+    "ground_truth": "Arriving before 1:00 PM for early check-in is subject to availability and a $35 early arrival fee, and leaving between 12:00 PM and 3:00 PM is billed at $25 per hour.",
+    "expected_keywords": [
+      "$35 early arrival fee",
+      "$25 per hour",
+      "between 12:00 PM and 3:00 PM"
+    ]
+  },
+  {
+    "id": "trv_014",
+    "question": "A guest with a flexible-rate reservation cancels 72 hours before the check-in date. Is there a penalty?",
+    "ground_truth": "No; flexible-rate reservations may be cancelled without penalty up to forty-eight (48) hours prior to the 3:00 PM check-in date, so a cancellation 72 hours ahead incurs no penalty.",
+    "expected_keywords": [
+      "without penalty",
+      "forty-eight (48) hours",
+      "3:00 PM check-in date"
+    ]
+  },
+  {
+    "id": "trv_015",
+    "question": "Which fees in the policy are charged per stay and which are charged per hour?",
+    "ground_truth": "The $50 pet cleaning fee is charged per stay, and late check-out between 12:00 PM and 3:00 PM is charged at $25 per hour.",
+    "expected_keywords": [
+      "$50 per stay",
+      "$25 per hour"
+    ]
+  },
+  {
+    "id": "trv_016",
+    "question": "A guest booked a non-refundable promotional rate and now wants to change their dates. When is payment taken, and can the dates be changed?",
+    "ground_truth": "Non-refundable promotional bookings are fully pre-paid at booking and are ineligible for any refund or date modification, so the dates cannot be changed.",
+    "expected_keywords": [
+      "Fully pre-paid at booking",
+      "ineligible for any refund or date modification"
+    ]
+  },
+  {
+    "id": "trv_017",
+    "question": "How do flexible-rate and non-refundable promotional bookings differ in what a guest can do when plans change?",
+    "ground_truth": "Flexible-rate reservations can be cancelled without penalty up to forty-eight (48) hours before the 3:00 PM check-in date, while non-refundable promotional bookings are fully pre-paid and ineligible for any refund or date modification.",
+    "expected_keywords": [
+      "without penalty",
+      "forty-eight (48) hours",
+      "ineligible for any refund"
+    ]
+  },
+  {
+    "id": "trv_018",
+    "question": "A family wants to bring three small dogs, each weighing 20 pounds. Does the pet policy allow it?",
+    "ground_truth": "No; guests may bring up to two (2) domestic dogs weighing under 50 pounds each, so three dogs exceeds the limit.",
+    "expected_keywords": [
+      "up to two (2) domestic dogs",
+      "weighing under 50 pounds each"
+    ]
+  },
+  {
+    "id": "trv_019",
+    "question": "A guest has two dogs weighing 45 and 48 pounds. Does their combined weight of 93 pounds break the pet policy?",
+    "ground_truth": "No; the limit is under 50 pounds for each dog rather than combined, so two dogs weighing 45 and 48 pounds are permitted.",
+    "expected_keywords": [
+      "weighing under 50 pounds each",
+      "up to two (2) domestic dogs"
+    ]
+  },
+  {
+    "id": "trv_020",
+    "question": "Do certified ADA service animals pay pet fees or face size limits?",
+    "ground_truth": "No; fully certified ADA service animals stay free of charge without size restrictions or pet fees.",
+    "expected_keywords": [
+      "Fully certified ADA service animals",
+      "free of charge",
+      "without size restrictions"
+    ]
+  },
+  {
+    "id": "trv_021",
+    "question": "A guest travels with an 80-pound certified ADA service dog and a 30-pound pet dog. What pet-related charges apply?",
+    "ground_truth": "The certified ADA service dog stays free of charge without size restrictions or pet fees, while the 30-pound pet dog is under the 50-pound limit and a non-refundable pet cleaning fee of $50 per stay applies.",
+    "expected_keywords": [
+      "certified ADA service animals",
+      "without size restrictions",
+      "$50 per stay"
+    ]
+  },
+  {
+    "id": "trv_022",
+    "question": "Does the non-smoking rule cover balconies, or only the indoor rooms?",
+    "ground_truth": "It covers both: all indoor rooms and balconies are 100% non-smoking.",
+    "expected_keywords": [
+      "indoor rooms and balconies",
+      "100% non-smoking"
+    ]
+  },
+  {
+    "id": "trv_023",
+    "question": "A guest with one 30-pound dog also smokes on the balcony. What total fees would they incur?",
+    "ground_truth": "They would owe the non-refundable $50 per stay pet cleaning fee plus the $300 deep-cleaning sanitization fee for the smoking violation, a total of $350.",
+    "expected_keywords": [
+      "$50 per stay",
+      "$300 deep-cleaning sanitization fee"
+    ]
+  },
+  {
+    "id": "trv_024",
+    "question": "A family of four's connecting charter transfer is delayed five hours due to airline scheduling. What meal compensation do they receive in total?",
+    "ground_truth": "Each passenger receives a $50 meal voucher because the delay is more than four (4) hours, so the four passengers receive $200 in meal vouchers in total.",
+    "expected_keywords": [
+      "$50 meal voucher per passenger",
+      "more than four (4) hours"
+    ]
+  },
+  {
+    "id": "trv_025",
+    "question": "What kind of delay, and what cause, qualifies guests for an airline-delay meal voucher?",
+    "ground_truth": "A connecting charter transfer must be delayed more than four (4) hours due to airline scheduling.",
+    "expected_keywords": [
+      "connecting charter transfer",
+      "airline scheduling",
+      "more than four (4) hours"
+    ]
+  },
+  {
+    "id": "trv_026",
+    "question": "A connecting charter transfer is delayed exactly four hours because of airline scheduling. Is the meal voucher owed?",
+    "ground_truth": "No; the $50 meal voucher applies only when the delay is more than four (4) hours, so a delay of exactly four hours does not qualify.",
+    "expected_keywords": [
+      "more than four (4) hours",
+      "$50 meal voucher"
+    ]
+  },
+  {
+    "id": "trv_027",
+    "question": "What do guests receive when a flight is cancelled because of an aircraft mechanical problem?",
+    "ground_truth": "They receive complimentary standard hotel lodging and round-trip airport shuttles.",
+    "expected_keywords": [
+      "complimentary standard hotel lodging",
+      "round-trip airport shuttles"
+    ]
+  },
+  {
+    "id": "trv_028",
+    "question": "Which causes of flight cancellation qualify a guest for the overnight mechanical grounding benefits?",
+    "ground_truth": "Flight cancellations resulting from technical or mechanical aircraft issues qualify.",
+    "expected_keywords": [
+      "technical or mechanical aircraft issues",
+      "Overnight Mechanical Grounding"
+    ]
+  },
+  {
+    "id": "trv_029",
+    "question": "A guest's connecting charter transfer is delayed six hours due to airline scheduling, and the flight is later cancelled because of a mechanical aircraft problem. What do they receive?",
+    "ground_truth": "They receive a $50 meal voucher per passenger for the delay of more than four (4) hours, plus complimentary standard hotel lodging and round-trip airport shuttles for the mechanical cancellation.",
+    "expected_keywords": [
+      "$50 meal voucher per passenger",
+      "complimentary standard hotel lodging",
+      "round-trip airport shuttles"
+    ]
+  },
+  {
+    "id": "trv_030",
+    "question": "What are the flat dollar fees a guest might be charged for early arrival, pets and smoking?",
+    "ground_truth": "A $35 early arrival fee for early check-in before 1:00 PM, a non-refundable pet cleaning fee of $50 per stay, and a $300 deep-cleaning sanitization fee for smoking violations.",
+    "expected_keywords": [
+      "$35 early arrival fee",
+      "$50 per stay",
+      "$300 deep-cleaning"
+    ]
+  }
+]

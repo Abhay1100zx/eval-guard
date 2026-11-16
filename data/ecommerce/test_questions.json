@@ -1,0 +1,287 @@
+[
+  {
+    "id": "ecom_001",
+    "question": "What is the return window and condition required for returning products?",
+    "ground_truth": "Items can be returned within thirty (30) days from delivery. They must be unwashed, unworn, in original condition with all tags attached.",
+    "expected_keywords": [
+      "30 days",
+      "unworn",
+      "tags attached"
+    ]
+  },
+  {
+    "id": "ecom_002",
+    "question": "What is the minimum order threshold to qualify for free standard shipping?",
+    "ground_truth": "Standard shipping (3-5 business days) is free for all orders with a subtotal of $50 or more; otherwise it costs $4.99.",
+    "expected_keywords": [
+      "$50",
+      "free for all orders",
+      "3 to 5 business days"
+    ]
+  },
+  {
+    "id": "ecom_003",
+    "question": "How long does a customer have to cancel or modify an order after placing it?",
+    "ground_truth": "Orders may be cancelled or modified within sixty (60) minutes of placement via the self-service portal.",
+    "expected_keywords": [
+      "60 minutes",
+      "cancel",
+      "modify"
+    ]
+  },
+  {
+    "id": "ecom_004",
+    "question": "What incentive is provided if a customer chooses store credit instead of an original payment refund?",
+    "ground_truth": "Customers selecting store credit receive 100% free return shipping and an additional 5% bonus credit applied immediately.",
+    "expected_keywords": [
+      "5% bonus",
+      "store credit",
+      "100% free"
+    ]
+  },
+  {
+    "id": "ecom_005",
+    "question": "How many business days does it take for a refund to appear on the original payment method?",
+    "ground_truth": "Refunds are processed within 5 to 7 business days following the 48-hour warehouse inspection.",
+    "expected_keywords": [
+      "5 to 7 business days",
+      "refund"
+    ]
+  },
+  {
+    "id": "ecom_006",
+    "question": "Within what timeframe must damaged or defective merchandise be reported?",
+    "ground_truth": "Damaged or defective items must be reported within seven (7) days of delivery with photos to receive an instant free replacement.",
+    "expected_keywords": [
+      "7 days",
+      "damaged",
+      "photographic proof"
+    ]
+  },
+  {
+    "id": "ecom_007",
+    "question": "Which items are strictly non-returnable?",
+    "ground_truth": "Final sale items, personalized items, gift cards, and intimate apparel/swimwear without hygiene seals are non-returnable.",
+    "expected_keywords": [
+      "final sale",
+      "gift cards",
+      "intimate apparel"
+    ]
+  },
+  {
+    "id": "ecom_008",
+    "question": "What is the order cutoff time for overnight delivery?",
+    "ground_truth": "Orders must be placed before 1:00 PM EST Monday through Thursday for overnight delivery at a $24.99 flat rate.",
+    "expected_keywords": [
+      "1:00 PM EST",
+      "overnight",
+      "$24.99"
+    ]
+  },
+  {
+    "id": "ecom_009",
+    "question": "How much will a customer pay for Standard Shipping on an order with a $35 subtotal?",
+    "ground_truth": "Because the subtotal is below $50, a flat rate of $4.99 applies to Standard Shipping.",
+    "expected_keywords": [
+      "$4.99",
+      "flat rate"
+    ]
+  },
+  {
+    "id": "ecom_010",
+    "question": "How much does Express 2-Day Shipping cost, and what delivery time is guaranteed?",
+    "ground_truth": "Express 2-Day Shipping is a $12.99 flat rate with guaranteed 2-business-day delivery.",
+    "expected_keywords": [
+      "$12.99",
+      "2-business-day delivery"
+    ]
+  },
+  {
+    "id": "ecom_011",
+    "question": "How much more does Overnight Delivery cost than Express 2-Day Shipping?",
+    "ground_truth": "Overnight Delivery is a $24.99 flat rate and Express 2-Day Shipping is a $12.99 flat rate, so Overnight Delivery costs $12.00 more.",
+    "expected_keywords": [
+      "$24.99",
+      "$12.99"
+    ]
+  },
+  {
+    "id": "ecom_012",
+    "question": "A customer places an order at 10:00 AM EST on a Friday and wants next-day Overnight Delivery. Does it qualify?",
+    "ground_truth": "No. Orders must be submitted prior to 1:00 PM EST Monday through Thursday for next-day delivery, so a Friday order does not qualify.",
+    "expected_keywords": [
+      "Monday through Thursday",
+      "next-day delivery"
+    ]
+  },
+  {
+    "id": "ecom_013",
+    "question": "Through which channel can a customer cancel or modify their order shipping details after placing an order?",
+    "ground_truth": "Customers can cancel or modify order shipping details directly through the self-service portal, within sixty (60) minutes of order placement.",
+    "expected_keywords": [
+      "self-service portal",
+      "shipping details"
+    ]
+  },
+  {
+    "id": "ecom_014",
+    "question": "From what date does the 30-day return window begin counting?",
+    "ground_truth": "Customers may return eligible products within thirty (30) days from the delivery date, so the return window is counted from delivery.",
+    "expected_keywords": [
+      "30 days",
+      "delivery date"
+    ]
+  },
+  {
+    "id": "ecom_015",
+    "question": "For which types of products is original packaging required when returning an item?",
+    "ground_truth": "Original packaging is required for electronics and footwear.",
+    "expected_keywords": [
+      "original packaging",
+      "electronics and footwear"
+    ]
+  },
+  {
+    "id": "ecom_016",
+    "question": "How does return shipping cost differ between returning for store credit and requesting a refund to the original payment method?",
+    "ground_truth": "Returns for store credit are 100% free with a prepaid label, while returns requesting a refund to the original payment method incur a $5.99 return shipping deduction.",
+    "expected_keywords": [
+      "100% free",
+      "prepaid label",
+      "$5.99"
+    ]
+  },
+  {
+    "id": "ecom_017",
+    "question": "Can a customer return swimwear that does not have a hygiene seal?",
+    "ground_truth": "No. Intimate apparel/swimwear without hygiene seals cannot be returned.",
+    "expected_keywords": [
+      "hygiene seals",
+      "swimwear",
+      "cannot be returned"
+    ]
+  },
+  {
+    "id": "ecom_018",
+    "question": "Can a customer return a personalized product, such as an item with their name printed on it?",
+    "ground_truth": "No. Personalized products are among the non-returnable items and cannot be returned.",
+    "expected_keywords": [
+      "personalized products",
+      "cannot be returned"
+    ]
+  },
+  {
+    "id": "ecom_019",
+    "question": "When and where is the 5% bonus credit applied if a customer picks store credit over a bank refund?",
+    "ground_truth": "The additional 5% bonus credit is applied immediately to the customer's NovaStore balance.",
+    "expected_keywords": [
+      "5% bonus credit",
+      "immediately",
+      "NovaStore balance"
+    ]
+  },
+  {
+    "id": "ecom_020",
+    "question": "What must a customer provide when reporting damaged or defective merchandise, and what do they receive?",
+    "ground_truth": "Customers must report damaged or defective merchandise with photographic proof to receive an instant free replacement.",
+    "expected_keywords": [
+      "photographic proof",
+      "instant free replacement"
+    ]
+  },
+  {
+    "id": "ecom_021",
+    "question": "A customer discovers on day 10 after delivery that an item arrived damaged. Is the instant free replacement still available?",
+    "ground_truth": "No. Damaged or defective merchandise must be reported within seven (7) days of delivery to receive an instant free replacement, so a report on day 10 falls outside that window.",
+    "expected_keywords": [
+      "7 days",
+      "instant free replacement"
+    ]
+  },
+  {
+    "id": "ecom_022",
+    "question": "A tracking status says a package was delivered but it is missing. By when must the customer report it?",
+    "ground_truth": "Customers must report the missing package within fourteen (14) days of the delivery date.",
+    "expected_keywords": [
+      "14 days",
+      "tracking status"
+    ]
+  },
+  {
+    "id": "ecom_023",
+    "question": "How many more days does a customer have to report a missing package than to report damaged merchandise?",
+    "ground_truth": "Missing packages must be reported within fourteen (14) days of delivery while damaged merchandise must be reported within seven (7) days, so customers have seven more days for missing packages.",
+    "expected_keywords": [
+      "14 days",
+      "7 days"
+    ]
+  },
+  {
+    "id": "ecom_024",
+    "question": "Does an order with a subtotal of exactly $50 qualify for free Standard Shipping?",
+    "ground_truth": "Yes. Standard Shipping is free for all orders with a subtotal of $50 or more, so an order of exactly $50 ships free.",
+    "expected_keywords": [
+      "subtotal of $50 or more",
+      "free for all orders"
+    ]
+  },
+  {
+    "id": "ecom_025",
+    "question": "What are the prices of the three shipping options: Standard, Express 2-Day and Overnight?",
+    "ground_truth": "Standard Shipping is free for orders with a subtotal of $50 or more (otherwise a flat rate of $4.99), Express 2-Day Shipping is a $12.99 flat rate, and Overnight Delivery is a $24.99 flat rate.",
+    "expected_keywords": [
+      "$4.99",
+      "$12.99",
+      "$24.99"
+    ]
+  },
+  {
+    "id": "ecom_026",
+    "question": "How quickly are returned items inspected once they arrive at the fulfillment center?",
+    "ground_truth": "Once a return is received at the fulfillment center, inspections are completed within 48 hours.",
+    "expected_keywords": [
+      "48 hours",
+      "fulfillment center",
+      "inspections"
+    ]
+  },
+  {
+    "id": "ecom_027",
+    "question": "What is the name of the store whose shipping, returns and customer service policy is described?",
+    "ground_truth": "The policy is the NovaStore E-Commerce Shipping, Returns & Customer Service Policy.",
+    "expected_keywords": [
+      "NovaStore",
+      "Customer Service Policy"
+    ]
+  },
+  {
+    "id": "ecom_028",
+    "question": "Which of the policy's deadlines are counted from the delivery date, and how long is each?",
+    "ground_truth": "Returns must be made within thirty (30) days from the delivery date, damaged or defective merchandise must be reported within seven (7) days of delivery, and missing packages must be reported within fourteen (14) days of delivery date.",
+    "expected_keywords": [
+      "30 days",
+      "7 days",
+      "14 days"
+    ]
+  },
+  {
+    "id": "ecom_029",
+    "question": "A customer wants to return an electronics item for a refund to their original payment method. What packaging and condition requirements apply, and what fee is deducted?",
+    "ground_truth": "The item must be in original condition, unwashed, unworn, with all original tags attached, electronics also require original packaging, and a $5.99 return shipping deduction applies to a refund to the original payment method.",
+    "expected_keywords": [
+      "original packaging",
+      "$5.99",
+      "tags attached"
+    ]
+  },
+  {
+    "id": "ecom_030",
+    "question": "What delivery time does each of the three shipping methods offer?",
+    "ground_truth": "Standard Shipping delivers in 3 to 5 business days, Express 2-Day Shipping guarantees 2-business-day delivery, and Overnight Delivery provides next-day delivery for orders submitted before the cutoff.",
+    "expected_keywords": [
+      "3 to 5 business days",
+      "2-business-day delivery",
+      "next-day delivery"
+    ]
+  }
+]

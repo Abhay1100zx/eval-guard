@@ -1,0 +1,22 @@
+# CloudCore IT & Technical Support: API Architecture, DevOps & Incident Guide
+
+## 1. API Rate Limiting and Quotas
+- Tier 1 (Free / Developer): 100 requests per minute per IP address. Burst limit of 150 requests.
+- Tier 2 (Enterprise): 2,500 requests per minute with burst capability up to 3,500 requests.
+- Rate Limit Exceeded Response: When quotas are exceeded, the API returns HTTP 429 Too Many Requests with headers `Retry-After: <seconds>` and `X-RateLimit-Reset`.
+- Pagination: Maximum `limit` parameter for list endpoints is 100 items per page; default is 20 items.
+
+## 2. Authentication & Secret Management
+- OAuth 2.0 Bearer Tokens: Access tokens are signed JWTs with an expiration lifespan of sixty (60) minutes.
+- Refresh Tokens: Refresh tokens have a 30-day sliding window validity and can only be used once (token rotation).
+- API Keys: Service-to-service keys must be rotated at least every 90 days. Compromised keys must be immediately revoked via the Developer Console.
+
+## 3. Production Incident Severity & SLA
+- Severity 1 (P1 - Critical): Production outage or severe data corruption impacting > 25% of users. Initial response SLA is fifteen (15) minutes; target resolution or mitigation SLA is four (4) hours.
+- Severity 2 (P2 - Major): Core workflow degraded with no immediate workaround. Initial response SLA is one (1) hour; target resolution is twelve (12) hours.
+- Severity 3 (P3 - Minor): Non-critical bugs, localized issues with available workarounds. Response SLA is twenty-four (24) business hours.
+
+## 4. Database Connection Pooling & Redis Caching
+- PostgreSQL Pool: Recommended maximum pool size is twenty (20) connections per container instance. Idle connection timeout is set to 300 seconds.
+- Redis Cluster: Cache eviction policy is configured as `volatile-lru` with a global memory threshold limit of 80% RAM before automated alert triggering.
+- Bastion Access: Direct SSH access to production clusters requires hardware security keys (FIDO2/WebAuthn) and ephemeral 8-hour certificates issued via HashiCorp Vault.

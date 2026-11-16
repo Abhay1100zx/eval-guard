@@ -1,0 +1,24 @@
+# Clinical Practice Standards: Type 2 Diabetes Mellitus
+
+## 1. Diagnostic Criteria
+- Fasting Plasma Glucose (FPG) >= 126 mg/dL (7.0 mmol/L) after an 8-hour fast.
+- 2-Hour Plasma Glucose >= 200 mg/dL (11.1 mmol/L) during a 75g Oral Glucose Tolerance Test (OGTT).
+- Glycated Hemoglobin (HbA1c) >= 6.5% (48 mmol/mol) performed using a certified NGSP assay.
+- In symptomatic patients with classic hyperglycemia symptoms (polyuria, polydipsia, unexplained weight loss), a random plasma glucose >= 200 mg/dL is diagnostic.
+
+## 2. Glycemic Goals
+- Non-pregnant adults general target: HbA1c < 7.0% (53 mmol/mol).
+- Preprandial capillary blood glucose: 80 - 130 mg/dL.
+- Peak postprandial capillary blood glucose: < 180 mg/dL.
+- Less stringent targets (such as HbA1c < 8.0%) may be appropriate for patients with limited life expectancy, extensive comorbid conditions, or high risk of severe hypoglycemia.
+
+## 3. Initial Pharmacological Management
+- Metformin is the preferred initial pharmacologic agent for the treatment of type 2 diabetes unless contraindicated.
+- Contraindications to Metformin: Estimated glomerular filtration rate (eGFR) < 30 mL/min/1.73 m² due to risk of lactic acidosis.
+- Early combination therapy should be considered if baseline HbA1c is 1.5% to 2.0% above target.
+- In patients with established atherosclerotic cardiovascular disease (ASCVD), heart failure, or chronic kidney disease (CKD), SGLT2 inhibitors or GLP-1 receptor agonists with proven CVD benefit are recommended independently of baseline HbA1c.
+
+## 4. Screening and Complications
+- Annual comprehensive dilated eye exam for diabetic retinopathy by an optometrist or ophthalmologist.
+- Annual urine albumin-to-creatinine ratio (UACR) and eGFR screening for diabetic kidney disease.
+- Annual comprehensive foot examination to assess sensation with a 10g monofilament and detect peripheral neuropathy.

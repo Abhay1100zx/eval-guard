@@ -1,0 +1,23 @@
+# Apex Technologies Corp: Corporate Legal, Contracts & Regulatory Compliance Policy
+
+[LEGAL SAFEGUARDS & DISCLAIMER]
+This document contains synthetic contract and compliance standards created specifically for the EvalGuard AI benchmark suite. It does not constitute formal legal counsel, attorney-client representation, or statutory certification.
+
+## 1. Non-Disclosure Agreement (NDA) & Confidentiality
+- Term of Confidentiality: Confidential Information must be protected for a duration of three (3) years from the date of disclosure.
+- Trade Secrets: Trade secrets must be maintained in strict confidence perpetually or for as long as permissible by applicable state and federal law.
+- Exclusions from Confidentiality: Information is excluded if it: (a) was already in the public domain without breach, (b) was known to recipient prior to disclosure, (c) was received from a third party without restriction, or (d) is required to be disclosed by judicial subpoena or regulatory mandate with prompt written notice to discloser.
+
+## 2. Intellectual Property (IP) Ownership & Work-for-Hire
+- Inventions Assignment: All software code, documentation, patents, and copyrightable works authored by employees or contractors within the scope of work are deemed 'Works Made for Hire' owned exclusively by the company.
+- Pre-Existing IP: Any prior inventions or open-source software incorporated into deliverables must be explicitly listed on Schedule A and licensed under non-exclusive, perpetual, royalty-free terms.
+
+## 3. Dispute Resolution and Governing Law
+- Mandatory Arbitration: All claims and disputes arising out of contracts must be resolved through binding individual arbitration administered by the American Arbitration Association (AAA) under its Commercial Arbitration Rules.
+- Class Action Waiver: Parties expressly waive any right to bring claims as class representative or class member in any class, collective, or representative proceeding.
+- Venue and Governing Law: The agreement is governed by the laws of the State of New York, without regard to conflict of law principles. Seat of arbitration is New York City.
+
+## 4. Data Privacy, GDPR & Breach Notification
+- Data Subject Rights SLA: Requests under GDPR (Article 15-22) and CCPA/CPRA for data access, correction, or deletion must be fulfilled within thirty (30) calendar days of verified identity.
+- Breach Notification Timeline: In the event of a confirmed personal data breach, the Data Protection Officer (DPO) must notify relevant supervisory authorities without undue delay and, where feasible, not later than seventy-two (72) hours after becoming aware of it.
+- Liquidated Damages: Unauthorized intentional data exfiltration by vendors incurs liquidated damages of $250,000 per verified incident without prejudice to further actual damages.
