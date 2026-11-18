@@ -180,7 +180,7 @@ const FEATURES: [keyof typeof Icon, string, string][] = [
 
 export function Features() {
   return (
-    <Section id="features" title="Everything you need to keep a chatbot honest" lead="Ten pages in one app, from a quick question in the playground to a full side-by-side model comparison.">
+    <Section id="features" title="Everything you need to keep a chatbot honest" lead="Ten pages in one app, from a live chat with your documents to a full side-by-side model comparison.">
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map(([icon, t, d], i) => {
           const I = Icon[icon];

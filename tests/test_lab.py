@@ -403,5 +403,113 @@ class TestLabApi(unittest.TestCase):
         self.assertEqual(self.c.post("/evaluate/run", json={"domain": "hr", "prompt_id": "nope"}).status_code, 404)
 
 
+class FakeChatRunner:
+    """Stands in for EvaluationRunner: records what the chat endpoint asked of the pipeline."""
+    seen: dict = {}
+    fail_with = None
+
+    def __init__(self, domain, **kw):
+        FakeChatRunner.seen = {"domain": domain, "kw": kw}
+        self.system_prompt = kw.get("system_prompt", "DEFAULT SYSTEM")
+        self.prompt_name = kw.get("prompt_name", "Default (strict, grounded)")
+        self.rag_pipeline = self
+        self.llm_client = self
+        self.model_name = "fake-model"
+        self.is_mock = False
+
+    def ensure_indexed(self):
+        return 3
+
+    def retrieve(self, query, top_k=3):
+        FakeChatRunner.seen.update(query=query, top_k=top_k)
+        return [{"text": "Employees receive 18 days of PTO.", "score": 0.7, "metadata": {"source": "hr.txt"}}]
+
+    def format_prompt(self, question, contexts):
+        return f"Context:\n{contexts[0]['text']}\n\nQuestion: {question}\n\nAnswer:"
+
+    def generate(self, prompt, system_prompt=None):
+        FakeChatRunner.seen.update(prompt=prompt, system=system_prompt)
+        if FakeChatRunner.fail_with:
+            raise FakeChatRunner.fail_with
+        return "18 days per year."
+
+
+class TestChatApi(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tmpdir()
+        p1 = mock.patch.dict("os.environ", {"EVALGUARD_AUTH_DISABLED": "true"})
+        p2 = mock.patch.object(main, "db", DatabaseManager(db_path=str(Path(self.tmp.name) / "chat.db")))
+        p3 = mock.patch.object(main, "EvaluationRunner", FakeChatRunner)
+        for p in (p1, p2, p3):
+            p.start()
+            self.addCleanup(p.stop)
+        self.addCleanup(self.tmp.cleanup)
+        FakeChatRunner.seen, FakeChatRunner.fail_with = {}, None
+        self.c = TestClient(main.app)
+
+    def msg(self, role, text):
+        return {"role": role, "content": text}
+
+    def test_validation(self):
+        u = [self.msg("user", "How many PTO days?")]
+        self.assertEqual(self.c.post("/chat", json={"domain": "hr", "messages": u + [self.msg("assistant", "18")]}).status_code, 422)
+        self.assertEqual(self.c.post("/chat", json={"domain": "nope", "messages": u}).status_code, 400)
+        self.assertEqual(self.c.post("/chat", json={"domain": "hr", "messages": []}).status_code, 422)
+        self.assertEqual(self.c.post("/chat", json={"domain": "hr", "messages": [self.msg("user", "")]}).status_code, 422)
+        self.assertEqual(self.c.post("/chat", json={"domain": "hr", "messages": [self.msg("user", "x")] * 41}).status_code, 422)
+        self.assertEqual(self.c.post("/chat", json={"domain": "hr", "messages": u, "top_k": 0}).status_code, 422)
+        self.assertEqual(self.c.post("/chat", json={"domain": "hr", "messages": u, "prompt_id": "nope"}).status_code, 404)
+
+    def test_single_turn(self):
+        r = self.c.post("/chat", json={"domain": "hr", "messages": [self.msg("user", "How many PTO days do employees get?")], "top_k": 2})
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        self.assertEqual((body["answer"], body["model"], body["is_mock"]), ("18 days per year.", "fake-model", False))
+        self.assertEqual(body["contexts"][0]["metadata"]["source"], "hr.txt")
+        self.assertEqual(FakeChatRunner.seen["top_k"], 2)
+        self.assertNotIn("Conversation so far", FakeChatRunner.seen["prompt"])
+
+    def test_short_followup_searches_with_the_previous_question_and_sends_history(self):
+        msgs = [self.msg("user", "What is the PTO policy?"), self.msg("assistant", "18 days a year."), self.msg("user", "And rollover?")]
+        self.assertEqual(self.c.post("/chat", json={"domain": "hr", "messages": msgs}).status_code, 200)
+        self.assertEqual(FakeChatRunner.seen["query"], "What is the PTO policy? And rollover?")
+        self.assertIn("Conversation so far", FakeChatRunner.seen["prompt"])
+        self.assertIn("Assistant: 18 days a year.", FakeChatRunner.seen["prompt"])
+        self.assertIn("Question: And rollover?", FakeChatRunner.seen["prompt"])
+
+    def test_long_question_is_searched_on_its_own(self):
+        msgs = [self.msg("user", "What is the PTO policy?"), self.msg("assistant", "18 days."),
+                self.msg("user", "How much paid parental leave does a primary caregiver get?")]
+        self.c.post("/chat", json={"domain": "hr", "messages": msgs})
+        self.assertEqual(FakeChatRunner.seen["query"], "How much paid parental leave does a primary caregiver get?")
+
+    def test_prompt_from_library_is_used(self):
+        pid = self.c.post("/prompts", json={"name": "Terse", "system_prompt": "Answer in one short sentence from the context."}).json()["id"]
+        self.c.post("/chat", json={"domain": "hr", "messages": [self.msg("user", "How many PTO days?")], "prompt_id": pid})
+        self.assertEqual(FakeChatRunner.seen["system"], "Answer in one short sentence from the context.")
+        self.assertEqual(FakeChatRunner.seen["kw"]["prompt_name"], "Terse")
+
+    def test_provider_errors_map_to_clear_statuses(self):
+        from evalguard.rag.pipeline import QuotaExceeded
+        body = {"domain": "hr", "messages": [self.msg("user", "How many PTO days?")]}
+        FakeChatRunner.fail_with = QuotaExceeded("daily limit used up")
+        quota = self.c.post("/chat", json=body)
+        self.assertEqual(quota.status_code, 429)
+        self.assertIn("daily limit", quota.json()["detail"])
+        FakeChatRunner.fail_with = RuntimeError("provider down")
+        self.assertEqual(self.c.post("/chat", json=body).status_code, 502)
+
+    def test_score_endpoint(self):
+        from evalguard.rag.pipeline import MockLLMClient
+        body = {"domain": "hr", "question": "How many PTO days?", "answer": "18 days.", "contexts": ["Employees receive 18 days of PTO."]}
+        with mock.patch.object(main, "get_llm_client", lambda role="answer", model=None: MockLLMClient()):
+            r = self.c.post("/chat/score", json=body)
+        self.assertEqual(r.status_code, 200)
+        out = r.json()
+        self.assertEqual((out["faithfulness"]["scorer"], out["relevance"]["scorer"], out["is_mock"]), ("mock", "mock", True))
+        self.assertEqual(self.c.post("/chat/score", json={**body, "answer": ""}).status_code, 422)
+        self.assertEqual(self.c.post("/chat/score", json={**body, "domain": "nope"}).status_code, 400)
+
+
 if __name__ == "__main__":
     unittest.main()

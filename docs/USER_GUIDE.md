@@ -80,9 +80,17 @@ Compares two runs and says whether quality really dropped.
 
 With few questions the test is not very sensitive, so treat small changes as hints.
 
-### Playground
+### Chat
 
-Type any question, pick a domain, and see the answer scored straight away: the answer, faithfulness, relevance, speed, and the document pieces used. Good for trying something without running the full set.
+Talk to the chatbot the way your users would. Good for trying something without running the full set.
+
+1. Pick a **domain** (the set of documents to answer from) and, if you like, a **system prompt** from your library. Changing either one starts a fresh conversation.
+2. Press one of the starter questions or type your own. **Enter** sends, **Shift+Enter** adds a new line. Follow-up questions work: the chatbot sees the last few turns.
+3. Under each answer you can open **Sources used** to see exactly which pieces of the documents it was given.
+4. Press **Score this answer** to have the judge AI mark it for faithfulness (is it backed by the sources?) and relevance (does it answer the question?). A red *mock* label means the marks are fake.
+5. Press **Save as test case** to turn a good (or bad) exchange into a permanent test question. Check the expected answer against the documents first, and make the question stand on its own, because test questions are asked without the chat history. It is used in the next run for that domain.
+
+Every message uses one call to the answer model. Scoring uses two more. Free models allow only about 50 calls a day, so score just the answers you care about. If the daily limit is used up you'll see a message saying so.
 
 ### Evaluate
 

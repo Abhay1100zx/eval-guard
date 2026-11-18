@@ -20,7 +20,7 @@ from evalguard.config import settings, utcnow_iso
 from evalguard.auth import require_user, auth_disabled
 from evalguard.runner import EvaluationRunner
 from evalguard.storage.database import DatabaseManager
-from evalguard.rag.pipeline import RAGPipeline, get_llm_client
+from evalguard.rag.pipeline import QuotaExceeded, RAGPipeline, get_llm_client
 from evalguard.rag.vector_store import get_vector_store
 from evalguard.metrics.faithfulness import FaithfulnessEvaluator
 from evalguard.metrics.relevance import RelevanceEvaluator
@@ -279,6 +279,90 @@ def live_rag_query(req: LiveQueryRequest):
         "latency_ms": rag_out["total_latency_ms"], "estimated_cost": rag_out["estimated_cost"],
         "is_mock": bool(runner.llm_client.is_mock or runner.judge_client.is_mock),
     }
+
+
+# ---------------------------------------------------------------- chat (multi-turn playground)
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(..., min_length=1, max_length=2000)
+
+
+class ChatRequest(BaseModel):
+    domain: str
+    messages: List[ChatMessage] = Field(..., min_length=1, max_length=40)
+    prompt_id: Optional[str] = Field(default=None, description="Prompt-library entry to use instead of the default")
+    top_k: int = Field(default=3, ge=1, le=10)
+
+
+class ChatScoreRequest(BaseModel):
+    domain: str
+    question: str = Field(..., min_length=1, max_length=2000)
+    answer: str = Field(..., min_length=1, max_length=6000)
+    contexts: List[str] = Field(default_factory=list, max_length=10)
+
+
+@app.post("/chat", dependencies=protected)
+def chat(req: ChatRequest):
+    """One chat turn against a domain's documents. Costs ONE model call; scoring is a separate, optional call."""
+    dom = _validate_domain(req.domain)
+    if req.messages[-1].role != "user":
+        raise HTTPException(422, "The last message must be from the user")
+
+    kwargs = {}
+    if req.prompt_id:
+        p = db.get_prompt(req.prompt_id)
+        if not p:
+            raise HTTPException(404, "Prompt not found")
+        kwargs = {"system_prompt": p["system_prompt"], "prompt_name": p["name"]}
+
+    runner = EvaluationRunner(domain=dom, **kwargs)
+    runner.ensure_indexed()
+
+    question = req.messages[-1].content
+    users = [m.content for m in req.messages if m.role == "user"]
+    # A short follow-up ("and the rollover?") has no topic of its own, so search with the previous question too.
+    query = f"{users[-2]} {question}" if len(users) > 1 and len(question.split()) <= 6 else question
+    history = req.messages[:-1][-6:]
+
+    t0 = time.perf_counter()
+    try:
+        contexts = runner.rag_pipeline.retrieve(query, top_k=req.top_k)
+        prompt = runner.rag_pipeline.format_prompt(question, contexts)
+        if history:
+            convo = "\n".join(f"{'User' if m.role == 'user' else 'Assistant'}: {m.content}" for m in history)
+            prompt = ("Conversation so far (for reference only; answer only from the context below):\n"
+                      f"{convo}\n\n{prompt}")
+        answer = runner.llm_client.generate(prompt=prompt, system_prompt=runner.system_prompt)
+    except QuotaExceeded as e:
+        raise HTTPException(429, str(e))
+    except Exception as e:
+        raise HTTPException(502, f"LLM provider error: {e}")
+
+    return {
+        "answer": answer,
+        "contexts": contexts,
+        "retrieval_query": query,
+        "latency_ms": round((time.perf_counter() - t0) * 1000, 1),
+        "model": runner.llm_client.model_name,
+        "prompt_name": runner.prompt_name,
+        "is_mock": bool(runner.llm_client.is_mock),
+    }
+
+
+@app.post("/chat/score", dependencies=protected)
+def chat_score(req: ChatScoreRequest):
+    """Optional: have the judge model mark one chat answer (two model calls)."""
+    dom = _validate_domain(req.domain)
+    cfg = DOMAINS_REGISTRY[dom]
+    judge = get_llm_client("judge")
+    try:
+        faith = FaithfulnessEvaluator(judge, cfg.faithfulness_threshold).evaluate(req.answer, req.contexts)
+        rel = RelevanceEvaluator(judge, cfg.relevance_threshold).evaluate(req.question, req.answer)
+    except QuotaExceeded as e:
+        raise HTTPException(429, str(e))
+    except Exception as e:
+        raise HTTPException(502, f"LLM provider error: {e}")
+    return {"faithfulness": faith, "relevance": rel, "is_mock": bool(judge.is_mock)}
 
 
 @app.post("/domains/{domain}/documents", dependencies=protected)

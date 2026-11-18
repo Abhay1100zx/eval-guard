@@ -223,6 +223,8 @@ Base address `http://127.0.0.1:8000`. Interactive docs at `/docs`. Every route e
 | `GET /runs/{id}/baselines` | Runs that may legitimately be its baseline |
 | `GET /runs/{id}/drift` | Drift report (optional `baseline_id`) |
 | `POST /rag/query` | Ask one question live and get it scored. Body: `question`, `domain`, `top_k` (1 to 20) |
+| `POST /chat` | Multi-turn chat. Body: `domain`, `messages` (up to 40, the last must be from the user), optional `prompt_id`, `top_k`. A short follow-up is searched together with the previous question; the last 6 turns go to the model as history. Returns the answer, the retrieved passages, latency and model. `429` when the daily quota is used up, `502` on other provider errors |
+| `POST /chat/score` | Judge one chat answer on demand (two model calls). Body: `domain`, `question`, `answer`, `contexts`. Returns faithfulness and relevance |
 | `POST /domains/{domain}/documents` | Upload `.txt`, `.md`, `.pdf` files (10 MB max each) and re-index |
 | `GET/POST /prompts`, `PUT/DELETE /prompts/{id}` | Prompt library |
 | `GET/POST /questions`, `PUT/DELETE /questions/{id}`, `POST /questions/import` | Test cases |
@@ -269,7 +271,7 @@ The API finds your Clerk domain from the publishable key. It reads it from `CLER
 | Folder | Contents |
 | --- | --- |
 | `web/src/app/(auth)` | Sign-in and sign-up pages |
-| `web/src/app/(app)` | The signed-in pages: overview, benchmark (Domains), runs, drift, playground, evaluate, experiments, prompts, questions, documents |
+| `web/src/app/(app)` | The signed-in pages: overview, benchmark (Domains), runs, drift, chat (`/playground`), evaluate, experiments, prompts, questions, documents |
 | `web/src/proxy.ts` | Clerk's gatekeeper: every page except sign-in/up needs a session |
 | `web/src/lib/api.ts` | `useApi` and `useFetch`: attach the token and call the API |
 | `web/src/lib/types.ts` | The data shapes shared across pages |
