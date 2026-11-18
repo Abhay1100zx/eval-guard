@@ -19,6 +19,7 @@ export function useApi() {
       const token = await getToken();
       const headers = new Headers(init.headers);
       if (token) headers.set("Authorization", `Bearer ${token}`);
+      headers.set("ngrok-skip-browser-warning", "1"); // free ngrok tunnels otherwise answer browsers with an HTML warning page
       if (init.body && !(init.body instanceof FormData)) headers.set("Content-Type", "application/json");
       let res: Response;
       try {

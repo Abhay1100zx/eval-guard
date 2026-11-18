@@ -39,7 +39,7 @@ app.add_middleware(
     allow_origins=[o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()],
     allow_credentials=False,  # Bearer tokens, no cookies
     allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["Authorization", "Content-Type", "ngrok-skip-browser-warning"],
 )
 
 db = DatabaseManager()

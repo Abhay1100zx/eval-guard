@@ -104,10 +104,11 @@ class TestCors(unittest.TestCase):
         for method in ("GET", "POST", "PUT", "DELETE"):
             r = client.options("/prompts/x", headers={"Origin": "http://localhost:3000",
                                                       "Access-Control-Request-Method": method,
-                                                      "Access-Control-Request-Headers": "authorization,content-type"})
+                                                      "Access-Control-Request-Headers": "authorization,content-type,ngrok-skip-browser-warning"})
             self.assertEqual(r.status_code, 200, method)
             self.assertEqual(r.headers.get("access-control-allow-origin"), "http://localhost:3000")
             self.assertIn(method, r.headers.get("access-control-allow-methods", ""))
+            self.assertIn("ngrok-skip-browser-warning", r.headers.get("access-control-allow-headers", "").lower())
 
     def test_unknown_origin_is_not_allowed(self):
         r = TestClient(main.app).options("/prompts", headers={"Origin": "https://evil.example",
