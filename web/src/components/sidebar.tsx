@@ -6,7 +6,7 @@ import { useSyncExternalStore } from "react";
 import { UserButton } from "@clerk/nextjs";
 
 const NAV = [
-  { href: "/", label: "Overview", icon: "📊" },
+  { href: "/dashboard", label: "Overview", icon: "📊" },
   { href: "/benchmark", label: "Domains", icon: "🌐" },
   { href: "/runs", label: "Runs", icon: "🔍" },
   { href: "/drift", label: "Drift", icon: "⚠️" },
@@ -18,7 +18,7 @@ const NAV = [
   { href: "/documents", label: "Documents", icon: "📁" },
 ];
 
-const isActive = (path: string, href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+const isActive = (path: string, href: string) => path === href || path.startsWith(href + "/");
 
 // Collapsed state is remembered per browser. Storage can be blocked, so every access is guarded.
 const KEY = "evalguard.sidebar.collapsed";

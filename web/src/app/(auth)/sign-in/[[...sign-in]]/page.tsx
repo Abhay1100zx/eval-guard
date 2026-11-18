@@ -4,7 +4,7 @@ import { SignIn } from "@clerk/nextjs";
 export default function Page() {
   return (
     <Suspense>
-      <SignIn />
+      <SignIn fallbackRedirectUrl="/dashboard" />
     </Suspense>
   );
 }
