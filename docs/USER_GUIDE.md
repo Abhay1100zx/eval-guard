@@ -90,7 +90,17 @@ Talk to the chatbot the way your users would. Good for trying something without 
 4. Press **Score this answer** to have the judge AI mark it for faithfulness (is it backed by the sources?) and relevance (does it answer the question?). A red *mock* label means the marks are fake.
 5. Press **Save as test case** to turn a good (or bad) exchange into a permanent test question. Check the expected answer against the documents first, and make the question stand on its own, because test questions are asked without the chat history. It is used in the next run for that domain.
 
-Every message uses one call to the answer model. Scoring uses two more. Free models allow only about 50 calls a day, so score just the answers you care about. If the daily limit is used up you'll see a message saying so.
+Every message uses one call to the answer model. Scoring uses two more. OpenRouter's free models allow only about 50 calls a day for the whole account, so score just the answers you care about.
+
+**When the daily limit is used up**, the chat does not stop. It quietly switches to a backup and tells you: the answer gets a yellow **backup model** label and a line saying which model was skipped and why. Backups are tried in this order, and only the ones you have set up are used:
+
+1. The other OpenRouter free models (these help when one model is busy, but not when the daily limit is the problem, because that limit covers all of them).
+2. **Google Gemini**, if you put a free key in `GEMINI_API_KEY` in `.env` (get one at aistudio.google.com/apikey, no card needed). This is the best backup.
+3. **Ollama** on your own computer, with the model named in `OLLAMA_MODEL`. It needs no key and has no daily limit, but it needs free memory (about 3 GB for `phi3`, 6 GB for `llama3`) and is slower.
+
+If a score cannot be produced by any AI judge, the numbers come from a simple word-overlap check and are labelled **rough estimate, not AI-judged**. Treat those as hints only.
+
+Only the chat uses backups. Benchmark runs and experiments always use one fixed model, because mixing models in a run would make its scores impossible to compare.
 
 ### Evaluate
 

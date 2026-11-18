@@ -56,6 +56,8 @@ class Settings:
     OPENROUTER_JUDGE_MODEL: str = os.getenv("OPENROUTER_JUDGE_MODEL", "nvidia/nemotron-3-ultra-550b-a55b:free")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama3")
+    # Ollama reserves memory for its whole context window; a RAG prompt needs ~1,200 tokens, and the default (4096+) fails on small machines
+    OLLAMA_NUM_CTX: int = int(os.getenv("OLLAMA_NUM_CTX", "2048"))
 
     # Embeddings & ChromaDB (strictly resolved to BASE_DIR regardless of CWD)
     EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")

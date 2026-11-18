@@ -20,7 +20,7 @@ from evalguard.config import settings, utcnow_iso
 from evalguard.auth import require_user, auth_disabled
 from evalguard.runner import EvaluationRunner
 from evalguard.storage.database import DatabaseManager
-from evalguard.rag.pipeline import QuotaExceeded, RAGPipeline, get_llm_client
+from evalguard.rag.pipeline import QuotaExceeded, RAGPipeline, get_chat_client, get_llm_client
 from evalguard.rag.vector_store import get_vector_store
 from evalguard.metrics.faithfulness import FaithfulnessEvaluator
 from evalguard.metrics.relevance import RelevanceEvaluator
@@ -324,6 +324,7 @@ def chat(req: ChatRequest):
     query = f"{users[-2]} {question}" if len(users) > 1 and len(question.split()) <= 6 else question
     history = req.messages[:-1][-6:]
 
+    llm = get_chat_client("answer")  # falls back to other free models when the first one is out of quota
     t0 = time.perf_counter()
     try:
         contexts = runner.rag_pipeline.retrieve(query, top_k=req.top_k)
@@ -332,7 +333,7 @@ def chat(req: ChatRequest):
             convo = "\n".join(f"{'User' if m.role == 'user' else 'Assistant'}: {m.content}" for m in history)
             prompt = ("Conversation so far (for reference only; answer only from the context below):\n"
                       f"{convo}\n\n{prompt}")
-        answer = runner.llm_client.generate(prompt=prompt, system_prompt=runner.system_prompt)
+        answer = llm.generate(prompt=prompt, system_prompt=runner.system_prompt)
     except QuotaExceeded as e:
         raise HTTPException(429, str(e))
     except Exception as e:
@@ -343,9 +344,10 @@ def chat(req: ChatRequest):
         "contexts": contexts,
         "retrieval_query": query,
         "latency_ms": round((time.perf_counter() - t0) * 1000, 1),
-        "model": runner.llm_client.model_name,
+        "model": llm.model_name,
+        "notes": getattr(llm, "skipped", []),  # why earlier models were skipped, empty when the first one answered
         "prompt_name": runner.prompt_name,
-        "is_mock": bool(runner.llm_client.is_mock),
+        "is_mock": bool(llm.is_mock),
     }
 
 
@@ -354,15 +356,14 @@ def chat_score(req: ChatScoreRequest):
     """Optional: have the judge model mark one chat answer (two model calls)."""
     dom = _validate_domain(req.domain)
     cfg = DOMAINS_REGISTRY[dom]
-    judge = get_llm_client("judge")
+    judge = get_chat_client("judge")
     try:
         faith = FaithfulnessEvaluator(judge, cfg.faithfulness_threshold).evaluate(req.answer, req.contexts)
         rel = RelevanceEvaluator(judge, cfg.relevance_threshold).evaluate(req.question, req.answer)
-    except QuotaExceeded as e:
-        raise HTTPException(429, str(e))
-    except Exception as e:
-        raise HTTPException(502, f"LLM provider error: {e}")
-    return {"faithfulness": faith, "relevance": rel, "is_mock": bool(judge.is_mock)}
+    except Exception as e:  # the evaluators already turn judge failures into a labelled heuristic score
+        raise HTTPException(502, f"Scoring failed: {e}")
+    return {"faithfulness": faith, "relevance": rel, "is_mock": bool(judge.is_mock),
+            "judge_model": judge.model_name, "notes": getattr(judge, "skipped", [])}
 
 
 @app.post("/domains/{domain}/documents", dependencies=protected)

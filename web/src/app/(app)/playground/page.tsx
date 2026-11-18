@@ -6,8 +6,9 @@ import type { Context, PromptVersion, TestQuestion } from "@/lib/types";
 import { Badge, Button, ErrorBox, MockBanner, PageHeader, inputCls, pct, scoreTone, useDomains } from "@/components/ui";
 
 interface Judged { score: number; reasoning: string; scorer?: string }
-interface Scores { faithfulness: Judged; relevance: Judged; is_mock: boolean }
-interface Reply { answer: string; contexts: Context[]; latency_ms: number; model: string; prompt_name: string; is_mock: boolean }
+interface Scores { faithfulness: Judged; relevance: Judged; is_mock: boolean; judge_model: string; notes: string[] }
+// `notes` explains why earlier models were skipped (e.g. their daily free limit was used up); empty when the first one answered
+interface Reply { answer: string; contexts: Context[]; latency_ms: number; model: string; notes: string[]; prompt_name: string; is_mock: boolean }
 
 interface Msg {
   role: "user" | "assistant";
@@ -214,8 +215,10 @@ function Answer({ m, question, domain, threshold, saving, onScore, onSave }: {
           <span aria-hidden>·</span>
           <span>{r.model}</span>
           {r.is_mock && <Badge tone="bad">mock LLM</Badge>}
+          {r.notes.length > 0 && <Badge tone="warn" title="The first model was unavailable, so a backup answered">backup model</Badge>}
         </div>
       )}
+      {r && r.notes.length > 0 && <p className="px-1 text-xs text-muted">Switched models: {r.notes.join("; ")}</p>}
       {r && r.contexts.length > 0 && (
         <details className="glass-inset rounded-2xl px-3.5 py-2 text-xs">
           <summary className="cursor-pointer font-medium">Sources used ({r.contexts.length})</summary>
@@ -235,7 +238,11 @@ function Answer({ m, question, domain, threshold, saving, onScore, onSave }: {
             <Badge tone={scoreTone(s.faithfulness.score, threshold)}>Faithfulness {pct(s.faithfulness.score, 0)}</Badge>
             <Badge tone={scoreTone(s.relevance.score, threshold)}>Relevance {pct(s.relevance.score, 0)}</Badge>
             {s.is_mock && <Badge tone="bad">mock judge — not a real score</Badge>}
+            {!s.is_mock && (s.faithfulness.scorer === "heuristic" || s.relevance.scorer === "heuristic")
+              ? <Badge tone="warn" title="No AI judge was reachable, so these numbers come from a simple word-overlap check">rough estimate, not AI-judged</Badge>
+              : !s.is_mock && <Badge title="The model that marked this answer">judged by {s.judge_model}</Badge>}
           </div>
+          {s.notes.length > 0 && <p className="text-muted">Switched judges: {s.notes.join("; ")}</p>}
           <p><span className="font-medium">Grounded in the sources?</span> <span className="text-muted">{s.faithfulness.reasoning}</span></p>
           <p><span className="font-medium">Answers the question?</span> <span className="text-muted">{s.relevance.reasoning}</span></p>
         </div>

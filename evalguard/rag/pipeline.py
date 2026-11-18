@@ -36,7 +36,7 @@ def _post_with_retry(url: str, *, headers=None, json_body=None, timeout=90, retr
             if res.status_code not in (429, 500, 502, 503, 504):
                 res.raise_for_status()
                 return res.json()
-            if res.status_code == 429 and re.search(r"per-day|per day|daily", res.text, re.IGNORECASE):
+            if res.status_code == 429 and re.search(r"per[- ]?day|daily", res.text, re.IGNORECASE):  # also Gemini's "PerDay"
                 raise QuotaExceeded(
                     "The LLM provider's daily request limit is used up. Wait for the reset (OpenRouter resets at 00:00 UTC), "
                     "add credits, or switch LLM_PROVIDER. Provider said: " + res.text[:180])
@@ -95,11 +95,22 @@ class OllamaLLMClient(BaseLLMClient):
         self.base_url = base_url.rstrip("/")
         self.model_name = model_name
 
+    def available(self) -> bool:
+        """True when the local server is up and the configured model is pulled (so a fallback never waits on a dead server)."""
+        import requests
+        try:
+            names = {m.get("name", "") for m in requests.get(f"{self.base_url}/api/tags", timeout=1.5).json().get("models", [])}
+        except Exception:
+            return False
+        return self.model_name in names or f"{self.model_name}:latest" in names
+
     def generate(self, prompt: str, system_prompt: Optional[str] = None) -> str:
         data = _post_with_retry(
             f"{self.base_url}/api/generate",
-            json_body={"model": self.model_name, "prompt": prompt, "system": system_prompt or "", "stream": False},
-            timeout=120,
+            json_body={"model": self.model_name, "prompt": prompt, "system": system_prompt or "", "stream": False,
+                       "options": {"num_ctx": settings.OLLAMA_NUM_CTX},
+                       "keep_alive": "30s"},  # Ollama's default keeps the model in RAM for 5 minutes, which starves the app on a small machine
+            timeout=120, retries=1,  # a local model that timed out once is just slow; retrying would hang the request for minutes
         )
         return data.get("response", "").strip()
 
@@ -155,6 +166,62 @@ def get_llm_client(role: str = "answer", model: Optional[str] = None) -> BaseLLM
     if provider == "ollama":
         return OllamaLLMClient(base_url=settings.OLLAMA_BASE_URL, model_name=settings.OLLAMA_MODEL)
     return MockLLMClient()
+
+
+class FallbackLLMClient(BaseLLMClient):
+    """Tries each client in turn and keeps the first answer. `model_name` is the model that actually answered
+    and `skipped` says why earlier ones were passed over. Chat only: a benchmark run must keep one fixed model,
+    or its scores can't be compared with other runs."""
+
+    def __init__(self, clients: List[BaseLLMClient]):
+        self.clients = clients
+        self.model_name = clients[0].model_name
+        self.is_mock = clients[0].is_mock
+        self.is_free = all(c.is_free for c in clients)
+        self.skipped: List[str] = []
+        self._quota_hit: set = set()  # providers (by class) whose daily limit is used up; kept so a second call doesn't retry them
+
+    def _skip(self, why: str) -> None:
+        if why not in self.skipped:
+            self.skipped.append(why)
+
+    def generate(self, prompt: str, system_prompt: Optional[str] = None) -> str:
+        for c in self.clients:
+            if type(c) in self._quota_hit:  # a daily limit is per account, so a sibling model from the same provider can't help
+                continue
+            try:
+                out = c.generate(prompt, system_prompt)
+            except QuotaExceeded:
+                self._quota_hit.add(type(c))
+                self._skip(f"{c.model_name}: daily limit used up")
+            except Exception as e:
+                self._skip(f"{c.model_name}: {str(e)[:90]}")
+            else:
+                self.model_name = c.model_name
+                return out
+        any_quota = bool(self._quota_hit)
+        msg = ("Every available model failed. " + " | ".join(self.skipped)
+               + ". Free daily limits reset at 00:00 UTC; or add a Gemini key / start Ollama as a backup.")
+        raise (QuotaExceeded if any_quota else RuntimeError)(msg)
+
+
+def get_chat_client(role: str = "answer") -> BaseLLMClient:
+    """The configured model first, then every other free option that is set up: the other OpenRouter models, a Gemini key,
+    a local Ollama model. Used by chat and on-demand scoring only; benchmark runs stay on one fixed model."""
+    primary = get_llm_client(role)
+    if primary.is_mock:
+        return primary
+    chain: List[BaseLLMClient] = [primary]
+    if isinstance(primary, OpenRouterLLMClient):
+        others = dict.fromkeys([settings.OPENROUTER_MODEL, settings.OPENROUTER_JUDGE_MODEL, "openrouter/free"])
+        chain += [OpenRouterLLMClient(settings.OPENROUTER_API_KEY, m, settings.OPENROUTER_BASE_URL) for m in others if m != primary.model_name]
+    if not isinstance(primary, GeminiLLMClient) and _has_key(settings.GEMINI_API_KEY):
+        chain.append(GeminiLLMClient(api_key=settings.GEMINI_API_KEY, model_name=settings.GEMINI_MODEL))
+    if not isinstance(primary, OllamaLLMClient):
+        ollama = OllamaLLMClient(base_url=settings.OLLAMA_BASE_URL, model_name=settings.OLLAMA_MODEL)
+        if ollama.available():
+            chain.append(ollama)
+    return FallbackLLMClient(chain) if len(chain) > 1 else primary
 
 
 class RAGPipeline:

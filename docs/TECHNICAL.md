@@ -223,8 +223,8 @@ Base address `http://127.0.0.1:8000`. Interactive docs at `/docs`. Every route e
 | `GET /runs/{id}/baselines` | Runs that may legitimately be its baseline |
 | `GET /runs/{id}/drift` | Drift report (optional `baseline_id`) |
 | `POST /rag/query` | Ask one question live and get it scored. Body: `question`, `domain`, `top_k` (1 to 20) |
-| `POST /chat` | Multi-turn chat. Body: `domain`, `messages` (up to 40, the last must be from the user), optional `prompt_id`, `top_k`. A short follow-up is searched together with the previous question; the last 6 turns go to the model as history. Returns the answer, the retrieved passages, latency and model. `429` when the daily quota is used up, `502` on other provider errors |
-| `POST /chat/score` | Judge one chat answer on demand (two model calls). Body: `domain`, `question`, `answer`, `contexts`. Returns faithfulness and relevance |
+| `POST /chat` | Multi-turn chat. Body: `domain`, `messages` (up to 40, the last must be from the user), optional `prompt_id`, `top_k`. A short follow-up is searched together with the previous question; the last 6 turns go to the model as history. Returns the answer, the retrieved passages, latency, the `model` that actually answered and `notes` (why earlier models were skipped; empty when the first one answered). Uses `get_chat_client`, a `FallbackLLMClient` over: the configured OpenRouter model, the other configured OpenRouter models plus `openrouter/free`, Gemini (if the key is real), local Ollama (if it is up and the model is pulled). After a daily-limit error from one provider its sibling models are skipped, because that limit is per account. `429` only when every option failed and at least one hit a daily limit, `502` otherwise |
+| `POST /chat/score` | Judge one chat answer on demand (two model calls, same fallback chain). Body: `domain`, `question`, `answer`, `contexts`. Returns faithfulness and relevance (each with its `scorer`; `heuristic` means no AI judge was reachable), `judge_model` and `notes` |
 | `POST /domains/{domain}/documents` | Upload `.txt`, `.md`, `.pdf` files (10 MB max each) and re-index |
 | `GET/POST /prompts`, `PUT/DELETE /prompts/{id}` | Prompt library |
 | `GET/POST /questions`, `PUT/DELETE /questions/{id}`, `POST /questions/import` | Test cases |
@@ -295,8 +295,8 @@ Set these in `.env` (project folder). Restart the API after changing them. Templ
 | `OPENROUTER_MODEL` | `baidu/ernie-5.5-flash-preview:free` | The answering model |
 | `OPENROUTER_JUDGE_MODEL` | `nvidia/nemotron-3-ultra-550b-a55b:free` | The marking model. Keep it different from the answering model |
 | `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | Change only for a compatible service |
-| `GEMINI_API_KEY`, `GEMINI_MODEL` | none, `gemini-2.5-flash` | For `LLM_PROVIDER=gemini` |
-| `OLLAMA_BASE_URL`, `OLLAMA_MODEL` | `http://localhost:11434`, `llama3` | For `LLM_PROVIDER=ollama` |
+| `GEMINI_API_KEY`, `GEMINI_MODEL` | none, `gemini-2.5-flash` | For `LLM_PROVIDER=gemini`. Also the chat's backup when OpenRouter's daily limit is used up |
+| `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_NUM_CTX` | `http://localhost:11434`, `llama3`, `2048` | For `LLM_PROVIDER=ollama`. Also the chat's keyless backup. `OLLAMA_NUM_CTX` caps the context window because Ollama reserves memory for all of it; the default (4096 and up) failed to load even `phi3` with 2.4 GB of free RAM |
 | `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | The search model |
 | `CHROMA_PERSIST_DIR` | `./data/chroma_db` | Where the search index is stored |
 | `SQLITE_DB_PATH` | `./evalguard.db` | Where results are stored |

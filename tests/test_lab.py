@@ -406,16 +406,12 @@ class TestLabApi(unittest.TestCase):
 class FakeChatRunner:
     """Stands in for EvaluationRunner: records what the chat endpoint asked of the pipeline."""
     seen: dict = {}
-    fail_with = None
 
     def __init__(self, domain, **kw):
         FakeChatRunner.seen = {"domain": domain, "kw": kw}
         self.system_prompt = kw.get("system_prompt", "DEFAULT SYSTEM")
         self.prompt_name = kw.get("prompt_name", "Default (strict, grounded)")
         self.rag_pipeline = self
-        self.llm_client = self
-        self.model_name = "fake-model"
-        self.is_mock = False
 
     def ensure_indexed(self):
         return 3
@@ -427,10 +423,15 @@ class FakeChatRunner:
     def format_prompt(self, question, contexts):
         return f"Context:\n{contexts[0]['text']}\n\nQuestion: {question}\n\nAnswer:"
 
+
+class FakeChatLLM:
+    """The model behind chat. Class attributes let a test make it fail or pretend a backup model answered."""
+    fail_with, model_name, skipped, is_mock = None, "fake-model", [], False
+
     def generate(self, prompt, system_prompt=None):
         FakeChatRunner.seen.update(prompt=prompt, system=system_prompt)
-        if FakeChatRunner.fail_with:
-            raise FakeChatRunner.fail_with
+        if FakeChatLLM.fail_with:
+            raise FakeChatLLM.fail_with
         return "18 days per year."
 
 
@@ -440,11 +441,13 @@ class TestChatApi(unittest.TestCase):
         p1 = mock.patch.dict("os.environ", {"EVALGUARD_AUTH_DISABLED": "true"})
         p2 = mock.patch.object(main, "db", DatabaseManager(db_path=str(Path(self.tmp.name) / "chat.db")))
         p3 = mock.patch.object(main, "EvaluationRunner", FakeChatRunner)
-        for p in (p1, p2, p3):
+        p4 = mock.patch.object(main, "get_chat_client", lambda role="answer": FakeChatLLM())
+        for p in (p1, p2, p3, p4):
             p.start()
             self.addCleanup(p.stop)
         self.addCleanup(self.tmp.cleanup)
-        FakeChatRunner.seen, FakeChatRunner.fail_with = {}, None
+        FakeChatRunner.seen = {}
+        FakeChatLLM.fail_with, FakeChatLLM.model_name, FakeChatLLM.skipped = None, "fake-model", []
         self.c = TestClient(main.app)
 
     def msg(self, role, text):
@@ -464,7 +467,7 @@ class TestChatApi(unittest.TestCase):
         r = self.c.post("/chat", json={"domain": "hr", "messages": [self.msg("user", "How many PTO days do employees get?")], "top_k": 2})
         self.assertEqual(r.status_code, 200)
         body = r.json()
-        self.assertEqual((body["answer"], body["model"], body["is_mock"]), ("18 days per year.", "fake-model", False))
+        self.assertEqual((body["answer"], body["model"], body["is_mock"], body["notes"]), ("18 days per year.", "fake-model", False, []))
         self.assertEqual(body["contexts"][0]["metadata"]["source"], "hr.txt")
         self.assertEqual(FakeChatRunner.seen["top_k"], 2)
         self.assertNotIn("Conversation so far", FakeChatRunner.seen["prompt"])
@@ -492,21 +495,27 @@ class TestChatApi(unittest.TestCase):
     def test_provider_errors_map_to_clear_statuses(self):
         from evalguard.rag.pipeline import QuotaExceeded
         body = {"domain": "hr", "messages": [self.msg("user", "How many PTO days?")]}
-        FakeChatRunner.fail_with = QuotaExceeded("daily limit used up")
+        FakeChatLLM.fail_with = QuotaExceeded("daily limit used up")
         quota = self.c.post("/chat", json=body)
         self.assertEqual(quota.status_code, 429)
         self.assertIn("daily limit", quota.json()["detail"])
-        FakeChatRunner.fail_with = RuntimeError("provider down")
+        FakeChatLLM.fail_with = RuntimeError("provider down")
         self.assertEqual(self.c.post("/chat", json=body).status_code, 502)
+
+    def test_a_backup_model_answer_says_which_model_and_why(self):
+        FakeChatLLM.model_name, FakeChatLLM.skipped = "gemini-2.5-flash", ["m-answer:free: daily limit used up"]
+        body = self.c.post("/chat", json={"domain": "hr", "messages": [self.msg("user", "How many PTO days?")]}).json()
+        self.assertEqual((body["model"], body["notes"]), ("gemini-2.5-flash", ["m-answer:free: daily limit used up"]))
 
     def test_score_endpoint(self):
         from evalguard.rag.pipeline import MockLLMClient
         body = {"domain": "hr", "question": "How many PTO days?", "answer": "18 days.", "contexts": ["Employees receive 18 days of PTO."]}
-        with mock.patch.object(main, "get_llm_client", lambda role="answer", model=None: MockLLMClient()):
+        with mock.patch.object(main, "get_chat_client", lambda role="answer": MockLLMClient()):
             r = self.c.post("/chat/score", json=body)
         self.assertEqual(r.status_code, 200)
         out = r.json()
         self.assertEqual((out["faithfulness"]["scorer"], out["relevance"]["scorer"], out["is_mock"]), ("mock", "mock", True))
+        self.assertEqual((out["judge_model"], out["notes"]), ("mock-eval-llm", []))
         self.assertEqual(self.c.post("/chat/score", json={**body, "answer": ""}).status_code, 422)
         self.assertEqual(self.c.post("/chat/score", json={**body, "domain": "nope"}).status_code, 400)
 
