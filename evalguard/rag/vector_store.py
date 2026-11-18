@@ -1,5 +1,6 @@
 import os
 import math
+import threading
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from evalguard.ingestion.loader import Document
@@ -78,26 +79,40 @@ class SimpleTFIDFVectorStore(BaseVectorStore):
         self.documents = []
         self.idf = {}
 
+_EMBEDDERS: Dict[str, Any] = {}
+_EMBEDDER_LOCK = threading.Lock()
+
+
+def get_embedding_function(model_name: str):
+    """One embedding model per process. Every vector store used to load its own copy (hundreds of MB, several seconds)
+    on every request, which made the first chat message slow and could exhaust memory on a small machine."""
+    with _EMBEDDER_LOCK:
+        if model_name not in _EMBEDDERS:
+            from chromadb.utils import embedding_functions
+            try:
+                _EMBEDDERS[model_name] = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=model_name)
+            except Exception:  # sentence-transformers missing or the model can't be downloaded
+                _EMBEDDERS[model_name] = embedding_functions.DefaultEmbeddingFunction()
+        return _EMBEDDERS[model_name]
+
+
+def warm_up(model_name: str) -> None:
+    """Load the embedding model and run it once, so the first real request doesn't pay for it."""
+    get_embedding_function(model_name)(["warm up"])
+
+
 class ChromaVectorStore(BaseVectorStore):
     """ChromaDB implementation with sentence-transformers embeddings."""
 
     def __init__(self, persist_dir: str, collection_name: str = "evalguard_docs", embedding_model_name: str = "all-MiniLM-L6-v2"):
         import chromadb
-        from chromadb.utils import embedding_functions
 
         self.persist_dir = persist_dir
         self.collection_name = collection_name
         Path(persist_dir).mkdir(parents=True, exist_ok=True)
 
         self.client = chromadb.PersistentClient(path=persist_dir)
-
-        # Attempt to use sentence-transformers, fallback to default embedding
-        try:
-            self.emb_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-                model_name=embedding_model_name
-            )
-        except Exception:
-            self.emb_fn = embedding_functions.DefaultEmbeddingFunction()
+        self.emb_fn = get_embedding_function(embedding_model_name)
 
         self.collection = self.client.get_or_create_collection(
             name=collection_name,

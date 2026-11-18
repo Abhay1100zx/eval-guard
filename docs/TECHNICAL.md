@@ -224,6 +224,10 @@ Base address `http://127.0.0.1:8000`. Interactive docs at `/docs`. Every route e
 | `GET /runs/{id}/drift` | Drift report (optional `baseline_id`) |
 | `POST /rag/query` | Ask one question live and get it scored. Body: `question`, `domain`, `top_k` (1 to 20) |
 | `POST /chat` | Multi-turn chat. Body: `domain`, `messages` (up to 40, the last must be from the user), optional `prompt_id`, `top_k`. A short follow-up is searched together with the previous question; the last 6 turns go to the model as history. Returns the answer, the retrieved passages, latency, the `model` that actually answered and `notes` (why earlier models were skipped; empty when the first one answered). Uses `get_chat_client`, a `FallbackLLMClient` over: the configured OpenRouter model, the other configured OpenRouter models plus `openrouter/free`, Gemini (if the key is real), local Ollama (if it is up and the model is pulled). After a daily-limit error from one provider its sibling models are skipped, because that limit is per account. `429` only when every option failed and at least one hit a daily limit, `502` otherwise |
+| `POST /chat/stream` | The same turn as `/chat`, sent as it is written (`application/x-ndjson`, one JSON object per line): `meta` (the passages and the search used), many `token`, then `done` (full `answer`, `model`, `notes`, `latency_ms`) or `error` (carries its own `status`, because the HTTP status is already 200). Input errors (bad domain, last message not from the user, unknown prompt) still come back as ordinary HTTP errors before anything streams. Fallback between models happens only before the first token. This is what the Chat page uses |
+| `GET /chats`, `GET/PUT/DELETE /chats/{id}` | Saved chats, private to the signed-in user (`sub` of the Clerk token; another user's id answers 404). The page chooses the id (8-64 letters, digits, `-`, `_`), so `PUT` creates or replaces. Up to 80 messages and 400 KB per chat, newest 100 kept |
+| `GET /schedule` | Whether scheduled runs are on, the interval and sample size, the domain that would run next, the last result, and which alert channels are configured (never their addresses) |
+| `POST /alerts/test` | Sends a test message through every configured alert channel. `400` if none is set up, `429` within 30 s of the last one |
 | `POST /chat/score` | Judge one chat answer on demand (two model calls, same fallback chain). Body: `domain`, `question`, `answer`, `contexts`. Returns faithfulness and relevance (each with its `scorer`; `heuristic` means no AI judge was reachable), `judge_model` and `notes` |
 | `POST /domains/{domain}/documents` | Upload `.txt`, `.md`, `.pdf` files (10 MB max each) and re-index |
 | `GET/POST /prompts`, `PUT/DELETE /prompts/{id}` | Prompt library |
@@ -275,7 +279,7 @@ The API finds your Clerk domain from the publishable key. It reads it from `CLER
 | `web/src/proxy.ts` | Clerk's gatekeeper: every page except sign-in/up needs a session |
 | `web/src/lib/api.ts` | `useApi` and `useFetch`: attach the token and call the API |
 | `web/src/lib/types.ts` | The data shapes shared across pages |
-| `web/src/components` | Shared pieces: `ui.tsx` (cards, badges, buttons), `sidebar.tsx`, `page-transition.tsx` |
+| `web/src/components` | Shared pieces: `ui.tsx` (cards, badges, buttons), `markdown.tsx` (safe markdown with clickable `[1]` citations), `sidebar.tsx`, `page-transition.tsx` |
 | `web/src/app/globals.css` | The design system: colours, glass effect, motion, accessibility fallbacks |
 
 Notes for developers:
@@ -296,6 +300,10 @@ Set these in `.env` (project folder). Restart the API after changing them. Templ
 | `OPENROUTER_JUDGE_MODEL` | `nvidia/nemotron-3-ultra-550b-a55b:free` | The marking model. Keep it different from the answering model |
 | `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | Change only for a compatible service |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | none, `gemini-2.5-flash` | For `LLM_PROVIDER=gemini`. Also the chat's backup when OpenRouter's daily limit is used up |
+| `EVALGUARD_SCHEDULE_HOURS`, `EVALGUARD_SCHEDULE_QUESTIONS` | `0` (off), `6` | Scheduled runs: every N hours, one domain on the first N standard questions. The domain is the one whose newest AI-judged run (not mock, heuristic, simulated or experiment) is oldest, never-scored first. State is in the `kv` table, stamped before the run so a crash or restart can't repeat it. A failed run waits for the next interval. Code: `evalguard/scheduler.py` |
+| `ALERT_WEBHOOK_URL` | none | Slack or Discord incoming webhook. The payload carries both `text` and `content`. Error messages never include the URL (it is a secret) |
+| `ALERT_SMTP_HOST`, `ALERT_SMTP_PORT`, `ALERT_SMTP_USER`, `ALERT_SMTP_PASSWORD`, `ALERT_EMAIL_FROM`, `ALERT_EMAIL_TO` | none, `587` | Email alerts: STARTTLS on any port except 465 (SSL). Needs host and recipient. Code: `evalguard/alerts.py` |
+| `EVALGUARD_WEB_URL` | none | Public address of the web app, so alerts can link to `/runs/<id>` |
 | `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_NUM_CTX` | `http://localhost:11434`, `llama3`, `2048` | For `LLM_PROVIDER=ollama`. Also the chat's keyless backup. `OLLAMA_NUM_CTX` caps the context window because Ollama reserves memory for all of it; the default (4096 and up) failed to load even `phi3` with 2.4 GB of free RAM |
 | `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | The search model |
 | `CHROMA_PERSIST_DIR` | `./data/chroma_db` | Where the search index is stored |
@@ -336,7 +344,9 @@ Frontend checks: `npx tsc --noEmit` and `npm run lint` in `web/`.
 2. Create `data/<key>/documents/` with your files, plus `test_questions.json` and `adversarial_questions.json`.
 3. Run `py -I scripts\validate_dataset.py <key>` until it reports no errors.
 
-**Add an AI provider.** In `evalguard/rag/pipeline.py`, write a class extending `BaseLLMClient` with a `generate(prompt, system_prompt)` method and `model_name`, then return it from `get_llm_client`. Use `_post_with_retry` for network calls.
+**Add an AI provider.** In `evalguard/rag/pipeline.py`, write a class extending `BaseLLMClient` with a `generate(prompt, system_prompt)` method and `model_name`, then return it from `get_llm_client`. Use `_post_with_retry` for network calls. To let the chat stream from it, also add `stream_generate(prompt, system_prompt)` yielding text pieces (the default yields the whole answer at once); use `_open_stream` and raise `QuotaExceeded` for a daily limit so the fallback chain skips it.
+
+**Chat internals worth knowing.** The embedding model is loaded **once per process** (`get_embedding_function` in `evalguard/rag/vector_store.py`) and pre-loaded in a background thread at API start-up; before this, every request built its own copy, which made the first message slow and could exhaust memory. Follow-ups that are short (8 words or fewer) or lean on a pronoun (up to 14 words) are rewritten into a standalone question by the model (one extra call; on any failure the previous question plus this one is searched instead); other questions are searched as typed. The prompt numbers the retrieved passages `[1]`, `[2]` and asks the model to cite them, which the page turns into links.
 
 **Add a score.** Write the metric in `evalguard/metrics/`, call it in `EvaluationRunner.run_evaluation`, add its columns in `database.py`'s migration list and `save_run`, then show it in the pages.
 

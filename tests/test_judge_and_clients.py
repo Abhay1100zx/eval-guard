@@ -169,6 +169,192 @@ class TestFallback(unittest.TestCase):
                 pipeline.GeminiLLMClient("key").generate("p")
 
 
+class FakeStream:
+    """What requests.post(..., stream=True) returns."""
+    def __init__(self, lines=(), status=200, text=""):
+        self.status_code, self._lines, self.text, self.closed, self.encoding = status, list(lines), text, False, None
+
+    def iter_lines(self, decode_unicode=False):
+        return iter(self._lines)
+
+    def close(self):
+        self.closed = True
+
+
+def sse(*chunks):
+    """Server-sent events the way OpenRouter/Gemini send them: keep-alive comments, blank separators, a [DONE] marker."""
+    import json
+    return [": keep-alive", *[x for c in chunks for x in (f"data: {json.dumps(c)}", "")], "data: [DONE]"]
+
+
+class TestStreamingClients(unittest.TestCase):
+    def openrouter(self):
+        return OpenRouterLLMClient("k", "m:free")
+
+    def test_openrouter_yields_pieces_as_they_arrive_and_closes_the_connection(self):
+        res = FakeStream(sse({"choices": [{"delta": {"content": "18 "}}]}, {"choices": [{"delta": {}}]},
+                             {"choices": [{"delta": {"content": "days"}}]}))
+        with mock.patch("requests.post", return_value=res) as post:
+            self.assertEqual(list(self.openrouter().stream_generate("p", "sys")), ["18 ", "days"])
+        self.assertTrue(post.call_args.kwargs["stream"])
+        self.assertTrue(post.call_args.kwargs["json"]["stream"])
+        self.assertEqual(post.call_args.kwargs["json"]["messages"][0], {"role": "system", "content": "sys"})
+        self.assertTrue(res.closed)
+        self.assertEqual(res.encoding, "utf-8")
+
+    def test_openrouter_empty_stream_is_an_error(self):
+        with mock.patch("requests.post", return_value=FakeStream(sse({"choices": [{"delta": {}}]}))):
+            with self.assertRaises(RuntimeError):
+                list(self.openrouter().stream_generate("p"))
+
+    def test_openrouter_error_chunk_mid_stream_raises(self):
+        res = FakeStream(sse({"choices": [{"delta": {"content": "a"}}]}, {"error": {"message": "boom"}}))
+        with mock.patch("requests.post", return_value=res):
+            gen = self.openrouter().stream_generate("p")
+            self.assertEqual(next(gen), "a")
+            with self.assertRaises(RuntimeError):
+                next(gen)
+
+    def test_stream_daily_limit_is_quota_exceeded_and_other_failures_are_plain_errors(self):
+        with mock.patch("requests.post", return_value=FakeStream(status=429, text="Rate limit exceeded: free-models-per-day")) as post, \
+                mock.patch.object(pipeline.time, "sleep") as sleep:
+            with self.assertRaises(pipeline.QuotaExceeded):
+                list(self.openrouter().stream_generate("p"))
+        self.assertEqual(post.call_count, 1)  # no retries: the fallback chain moves on instead
+        sleep.assert_not_called()
+        with mock.patch("requests.post", return_value=FakeStream(status=503, text="busy")):
+            with self.assertRaises(RuntimeError) as ctx:
+                list(self.openrouter().stream_generate("p"))
+        self.assertNotIsInstance(ctx.exception, pipeline.QuotaExceeded)
+        import requests
+        with mock.patch("requests.post", side_effect=requests.ConnectionError("down")):
+            with self.assertRaises(RuntimeError):
+                list(self.openrouter().stream_generate("p"))
+
+    def test_gemini_streams_from_the_sse_endpoint(self):
+        res = FakeStream(sse({"candidates": [{"content": {"parts": [{"text": "18 "}]}}]},
+                             {"candidates": [{"content": {"parts": [{"text": "days"}, {"text": "!"}]}}]}))
+        with mock.patch("requests.post", return_value=res) as post:
+            self.assertEqual(list(pipeline.GeminiLLMClient("k", "gemini-x").stream_generate("p", "sys")), ["18 ", "days!"])
+        self.assertIn("gemini-x:streamGenerateContent?alt=sse", post.call_args.args[0])
+        self.assertIn("sys", post.call_args.kwargs["json"]["contents"][0]["parts"][0]["text"])
+
+    def test_ollama_streams_newline_delimited_json(self):
+        import json
+        lines = [json.dumps({"response": "18 ", "done": False}), "", json.dumps({"response": "days", "done": False}),
+                 json.dumps({"response": "", "done": True}), json.dumps({"response": "ignored", "done": False})]
+        with mock.patch("requests.post", return_value=FakeStream(lines)) as post:
+            self.assertEqual(list(pipeline.OllamaLLMClient(model_name="phi3").stream_generate("p")), ["18 ", "days"])
+        self.assertTrue(post.call_args.kwargs["json"]["stream"])
+        self.assertEqual(post.call_args.kwargs["json"]["keep_alive"], "30s")
+        with mock.patch("requests.post", return_value=FakeStream(['{"error": "out of memory"}'])):
+            with self.assertRaises(RuntimeError):
+                list(pipeline.OllamaLLMClient(model_name="phi3").stream_generate("p"))
+
+    def test_mock_streams_word_by_word_and_a_plain_client_streams_in_one_piece(self):
+        m = pipeline.MockLLMClient()
+        prompt = "Context:\nEmployees receive 18 days of paid leave each year.\n\nQuestion: How many days?\n\nAnswer:"
+        pieces = list(m.stream_generate(prompt))
+        self.assertGreater(len(pieces), 3)
+        self.assertEqual("".join(pieces).strip(), m.generate(prompt).strip())
+        self.assertEqual(list(Fake("plain").stream_generate("p")), ["answer from plain"])
+
+
+class StreamFake(Fake):
+    """Streams `pieces`, raising `fail` after `fail_after` of them (immediately when 0)."""
+    def __init__(self, name, pieces=("a ", "b"), fail=None, fail_after=0):
+        super().__init__(name)
+        self.pieces, self.stream_fail, self.fail_after = pieces, fail, fail_after
+
+    def stream_generate(self, prompt, system_prompt=None):
+        self.calls += 1
+        for i, p in enumerate(self.pieces):
+            if self.stream_fail and i >= self.fail_after:
+                raise self.stream_fail
+            yield p
+        if self.stream_fail and self.fail_after >= len(self.pieces):
+            raise self.stream_fail
+
+
+class OtherStreamFake(StreamFake):
+    pass
+
+
+class TestFallbackStreaming(unittest.TestCase):
+    def test_healthy_first_model_streams_and_nothing_is_skipped(self):
+        a, b = StreamFake("a"), StreamFake("b")
+        client = pipeline.FallbackLLMClient([a, b])
+        self.assertEqual(list(client.stream_generate("p")), ["a ", "b"])
+        self.assertEqual((client.model_name, client.skipped, b.calls), ("a", [], 0))
+
+    def test_failure_before_the_first_piece_moves_to_the_next_model(self):
+        a, g = StreamFake("or-1", fail=pipeline.QuotaExceeded("free-models-per-day")), OtherStreamFake("gemini", pieces=("hi",))
+        client = pipeline.FallbackLLMClient([a, StreamFake("or-2"), g])
+        self.assertEqual(list(client.stream_generate("p")), ["hi"])
+        self.assertEqual((client.model_name, client.skipped), ("gemini", ["or-1: daily limit used up"]))
+
+    def test_other_errors_try_the_next_model_even_from_the_same_provider(self):
+        client = pipeline.FallbackLLMClient([StreamFake("or-1", fail=RuntimeError("HTTP 503")), StreamFake("or-2", pieces=("ok",))])
+        self.assertEqual(list(client.stream_generate("p")), ["ok"])
+        self.assertIn("or-1: HTTP 503", client.skipped[0])
+
+    def test_failure_after_text_was_sent_is_raised_not_hidden_by_switching_models(self):
+        a, b = StreamFake("a", fail=RuntimeError("dropped"), fail_after=1), StreamFake("b", pieces=("other",))
+        client = pipeline.FallbackLLMClient([a, b])
+        got = []
+        with self.assertRaises(RuntimeError):
+            for piece in client.stream_generate("p"):
+                got.append(piece)
+        self.assertEqual((got, b.calls, client.model_name), (["a "], 0, "a"))
+
+    def test_quota_after_text_was_sent_is_raised_too(self):
+        client = pipeline.FallbackLLMClient([StreamFake("a", fail=pipeline.QuotaExceeded("daily"), fail_after=1), OtherStreamFake("b")])
+        with self.assertRaises(pipeline.QuotaExceeded):
+            list(client.stream_generate("p"))
+
+    def test_every_model_failing_reports_quota_when_a_limit_was_hit_and_remembers_it(self):
+        a = StreamFake("or-1", fail=pipeline.QuotaExceeded("daily"))
+        client = pipeline.FallbackLLMClient([a, OtherStreamFake("gemini", fail=RuntimeError("boom"))])
+        with self.assertRaises(pipeline.QuotaExceeded) as ctx:
+            list(client.stream_generate("p"))
+        self.assertIn("or-1: daily limit used up", str(ctx.exception))
+        self.assertIn("gemini: boom", str(ctx.exception))
+        with self.assertRaises(pipeline.QuotaExceeded):
+            list(client.stream_generate("p again"))
+        self.assertEqual(a.calls, 1)  # not retried
+
+    def test_non_streaming_clients_in_the_chain_still_work(self):
+        client = pipeline.FallbackLLMClient([StreamFake("a", fail=RuntimeError("x")), Fake("plain")])
+        self.assertEqual(list(client.stream_generate("p")), ["answer from plain"])
+
+
+class TestSharedEmbedder(unittest.TestCase):
+    def setUp(self):
+        from evalguard.rag import vector_store
+        self.vs = vector_store
+        self.vs._EMBEDDERS.clear()
+        self.addCleanup(self.vs._EMBEDDERS.clear)
+
+    def test_the_model_is_loaded_once_per_process_not_once_per_vector_store(self):
+        with mock.patch("chromadb.utils.embedding_functions.SentenceTransformerEmbeddingFunction",
+                        side_effect=lambda model_name: object()) as st:  # a fresh object per load
+            a, b = self.vs.get_embedding_function("m"), self.vs.get_embedding_function("m")
+            c = self.vs.get_embedding_function("other")
+        self.assertIs(a, b)
+        self.assertIsNot(a, c)
+        self.assertEqual(st.call_count, 2)  # once for "m", once for "other"
+
+    def test_falls_back_to_chromas_default_embedder_when_the_model_cannot_load(self):
+        with mock.patch("chromadb.utils.embedding_functions.SentenceTransformerEmbeddingFunction", side_effect=OSError("offline")), \
+                mock.patch("chromadb.utils.embedding_functions.DefaultEmbeddingFunction") as default:
+            self.assertIs(self.vs.get_embedding_function("m"), default.return_value)
+
+    def test_warm_up_runs_the_model_once(self):
+        with mock.patch("chromadb.utils.embedding_functions.SentenceTransformerEmbeddingFunction") as st:
+            self.vs.warm_up("m")
+        st.return_value.assert_called_once_with(["warm up"])
+
+
 class TestOllama(unittest.TestCase):
     def test_context_window_is_capped_so_small_machines_can_load_the_model(self):
         with mock.patch("requests.post", return_value=FakeResp(200, {"response": " hi "})) as post, \

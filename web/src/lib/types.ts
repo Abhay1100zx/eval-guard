@@ -113,6 +113,24 @@ export interface PromptVersion {
   is_default: number;
 }
 
+export interface ChatSummary {
+  id: string;
+  title: string;
+  domain: string;
+  updated_at: string;
+}
+
+export interface Schedule {
+  enabled: boolean;
+  hours: number;
+  questions: number;
+  next_domain: string | null;
+  last_run_at: string | null;
+  next_due_at: string | null;
+  last_result: { domain: string; at: string; status: string; error: string | null; run_id: string | null; drift: string | null } | null;
+  alerts: { webhook: boolean; email: boolean };
+}
+
 export type QuestionKind = "standard" | "out_of_scope" | "injection" | "injection_hybrid";
 
 export interface TestQuestion {

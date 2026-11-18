@@ -425,14 +425,28 @@ class FakeChatRunner:
 
 
 class FakeChatLLM:
-    """The model behind chat. Class attributes let a test make it fail or pretend a backup model answered."""
+    """The model behind chat. Class attributes let a test make it fail, pretend a backup model answered,
+    or choose what a "rewrite this question" call returns (None makes that call fail)."""
     fail_with, model_name, skipped, is_mock = None, "fake-model", [], False
+    rewrite, rewrite_calls, fail_after_pieces = None, 0, 0
 
     def generate(self, prompt, system_prompt=None):
+        if "Rewrite the last question" in prompt:
+            FakeChatLLM.rewrite_calls += 1
+            if FakeChatLLM.rewrite is None:
+                raise RuntimeError("rewrite failed")
+            return FakeChatLLM.rewrite
         FakeChatRunner.seen.update(prompt=prompt, system=system_prompt)
         if FakeChatLLM.fail_with:
             raise FakeChatLLM.fail_with
         return "18 days per year."
+
+    def stream_generate(self, prompt, system_prompt=None):
+        FakeChatRunner.seen.update(prompt=prompt, system=system_prompt)
+        for i, piece in enumerate(["18 days ", "per ", "year."]):
+            if FakeChatLLM.fail_with and i >= FakeChatLLM.fail_after_pieces:
+                raise FakeChatLLM.fail_with
+            yield piece
 
 
 class TestChatApi(unittest.TestCase):
@@ -448,10 +462,21 @@ class TestChatApi(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         FakeChatRunner.seen = {}
         FakeChatLLM.fail_with, FakeChatLLM.model_name, FakeChatLLM.skipped = None, "fake-model", []
+        FakeChatLLM.rewrite, FakeChatLLM.rewrite_calls, FakeChatLLM.fail_after_pieces, FakeChatLLM.is_mock = None, 0, 0, False
         self.c = TestClient(main.app)
 
     def msg(self, role, text):
         return {"role": role, "content": text}
+
+    def stream(self, body):
+        """POST /chat/stream and return (response, list of events)."""
+        import json
+        r = self.c.post("/chat/stream", json=body)
+        return r, [json.loads(line) for line in r.text.splitlines() if line.strip()]
+
+    def followup_body(self):
+        return {"domain": "hr", "messages": [self.msg("user", "What is the PTO policy?"), self.msg("assistant", "18 days a year."),
+                                              self.msg("user", "And rollover?")]}
 
     def test_validation(self):
         u = [self.msg("user", "How many PTO days?")]
@@ -472,19 +497,91 @@ class TestChatApi(unittest.TestCase):
         self.assertEqual(FakeChatRunner.seen["top_k"], 2)
         self.assertNotIn("Conversation so far", FakeChatRunner.seen["prompt"])
 
-    def test_short_followup_searches_with_the_previous_question_and_sends_history(self):
-        msgs = [self.msg("user", "What is the PTO policy?"), self.msg("assistant", "18 days a year."), self.msg("user", "And rollover?")]
-        self.assertEqual(self.c.post("/chat", json={"domain": "hr", "messages": msgs}).status_code, 200)
-        self.assertEqual(FakeChatRunner.seen["query"], "What is the PTO policy? And rollover?")
+    def test_short_followup_is_rewritten_by_the_model_and_history_is_sent(self):
+        FakeChatLLM.rewrite = '"How much unused PTO can be rolled over to the next year?"'
+        self.assertEqual(self.c.post("/chat", json=self.followup_body()).status_code, 200)
+        self.assertEqual(FakeChatRunner.seen["query"], "How much unused PTO can be rolled over to the next year?")
+        self.assertEqual(FakeChatLLM.rewrite_calls, 1)
         self.assertIn("Conversation so far", FakeChatRunner.seen["prompt"])
         self.assertIn("Assistant: 18 days a year.", FakeChatRunner.seen["prompt"])
-        self.assertIn("Question: And rollover?", FakeChatRunner.seen["prompt"])
+        self.assertIn("Question: And rollover?", FakeChatRunner.seen["prompt"])  # the model still answers what was typed
 
-    def test_long_question_is_searched_on_its_own(self):
+    def test_failed_rewrite_falls_back_to_the_previous_question_plus_this_one(self):
+        FakeChatLLM.rewrite = None
+        self.assertEqual(self.c.post("/chat", json=self.followup_body()).status_code, 200)
+        self.assertEqual(FakeChatRunner.seen["query"], "What is the PTO policy? And rollover?")
+
+    def test_unusable_rewrites_are_ignored(self):
+        for bad in ("", "no", "x" * 400):
+            FakeChatLLM.rewrite = bad
+            self.c.post("/chat", json=self.followup_body())
+            self.assertEqual(FakeChatRunner.seen["query"], "What is the PTO policy? And rollover?", bad[:5])
+
+    def test_mock_model_skips_the_rewrite(self):
+        FakeChatLLM.is_mock, FakeChatLLM.rewrite = True, "should not be used"
+        self.c.post("/chat", json=self.followup_body())
+        self.assertEqual((FakeChatLLM.rewrite_calls, FakeChatRunner.seen["query"]), (0, "What is the PTO policy? And rollover?"))
+
+    def test_long_self_contained_question_is_searched_as_typed_without_an_extra_call(self):
         msgs = [self.msg("user", "What is the PTO policy?"), self.msg("assistant", "18 days."),
                 self.msg("user", "How much paid parental leave does a primary caregiver get?")]
+        FakeChatLLM.rewrite = "should not be used"
         self.c.post("/chat", json={"domain": "hr", "messages": msgs})
         self.assertEqual(FakeChatRunner.seen["query"], "How much paid parental leave does a primary caregiver get?")
+        self.assertEqual(FakeChatLLM.rewrite_calls, 0)
+
+    def test_pronoun_follow_ups_up_to_14_words_are_rewritten(self):
+        FakeChatLLM.rewrite = "Can unused vacation days be paid out when an employee leaves?"
+        msgs = [self.msg("user", "What is the PTO policy?"), self.msg("assistant", "18 days."),
+                self.msg("user", "Can they be paid out if I leave the company before the year ends?")]
+        self.c.post("/chat", json={"domain": "hr", "messages": msgs})
+        self.assertEqual(FakeChatLLM.rewrite_calls, 1)
+
+    def test_passages_are_numbered_and_the_model_is_told_to_cite_them(self):
+        self.c.post("/chat", json={"domain": "hr", "messages": [self.msg("user", "How many PTO days do employees get?")]})
+        prompt = FakeChatRunner.seen["prompt"]
+        self.assertIn("[1] Employees receive 18 days of PTO.", prompt)
+        self.assertIn("Cite the numbered passages", prompt)
+        self.assertIn("Question: How many PTO days do employees get?", prompt)
+
+    # ---- streaming
+    def test_stream_sends_sources_then_pieces_then_done(self):
+        r, ev = self.stream({"domain": "hr", "messages": [self.msg("user", "How many PTO days do employees get?")]})
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.headers["content-type"].startswith("application/x-ndjson"))
+        self.assertEqual([e["type"] for e in ev], ["meta", "token", "token", "token", "done"])
+        self.assertEqual(ev[0]["contexts"][0]["metadata"]["source"], "hr.txt")
+        self.assertEqual(ev[0]["retrieval_query"], "How many PTO days do employees get?")
+        self.assertEqual("".join(e["text"] for e in ev if e["type"] == "token"), "18 days per year.")
+        done = ev[-1]
+        self.assertEqual((done["answer"], done["model"], done["notes"], done["is_mock"]), ("18 days per year.", "fake-model", [], False))
+        self.assertGreaterEqual(done["latency_ms"], 0)
+
+    def test_stream_reports_the_backup_model_and_the_rewritten_search(self):
+        FakeChatLLM.model_name, FakeChatLLM.skipped = "phi3", ["m-answer:free: daily limit used up"]
+        FakeChatLLM.rewrite = "How much unused PTO can be rolled over to the next year?"
+        _, ev = self.stream(self.followup_body())
+        self.assertEqual(ev[0]["retrieval_query"], "How much unused PTO can be rolled over to the next year?")
+        self.assertEqual((ev[-1]["model"], ev[-1]["notes"]), ("phi3", ["m-answer:free: daily limit used up"]))
+
+    def test_stream_input_errors_are_normal_http_errors(self):
+        u = [self.msg("user", "How many PTO days?")]
+        self.assertEqual(self.c.post("/chat/stream", json={"domain": "hr", "messages": u + [self.msg("assistant", "18")]}).status_code, 422)
+        self.assertEqual(self.c.post("/chat/stream", json={"domain": "nope", "messages": u}).status_code, 400)
+        self.assertEqual(self.c.post("/chat/stream", json={"domain": "hr", "messages": u, "prompt_id": "nope"}).status_code, 404)
+
+    def test_stream_quota_error_before_any_text_is_an_error_event(self):
+        from evalguard.rag.pipeline import QuotaExceeded
+        FakeChatLLM.fail_with = QuotaExceeded("daily limit used up")
+        r, ev = self.stream({"domain": "hr", "messages": [self.msg("user", "How many PTO days?")]})
+        self.assertEqual([e["type"] for e in ev], ["meta", "error"])
+        self.assertEqual((ev[1]["status"], "daily limit" in ev[1]["message"]), (429, True))
+
+    def test_stream_failure_midway_keeps_the_text_already_sent_and_ends_with_an_error(self):
+        FakeChatLLM.fail_with, FakeChatLLM.fail_after_pieces = RuntimeError("connection dropped"), 2
+        _, ev = self.stream({"domain": "hr", "messages": [self.msg("user", "How many PTO days?")]})
+        self.assertEqual([e["type"] for e in ev], ["meta", "token", "token", "error"])
+        self.assertEqual(ev[-1]["status"], 502)
 
     def test_prompt_from_library_is_used(self):
         pid = self.c.post("/prompts", json={"name": "Terse", "system_prompt": "Answer in one short sentence from the context."}).json()["id"]
@@ -518,6 +615,71 @@ class TestChatApi(unittest.TestCase):
         self.assertEqual((out["judge_model"], out["notes"]), ("mock-eval-llm", []))
         self.assertEqual(self.c.post("/chat/score", json={**body, "answer": ""}).status_code, 422)
         self.assertEqual(self.c.post("/chat/score", json={**body, "domain": "nope"}).status_code, 400)
+
+
+class TestSavedChats(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tmpdir()
+        p = mock.patch.object(main, "db", DatabaseManager(db_path=str(Path(self.tmp.name) / "chats.db")))
+        p.start()
+        self.addCleanup(p.stop)
+        self.addCleanup(self.tmp.cleanup)
+        self.addCleanup(main.app.dependency_overrides.clear)
+        self.c = TestClient(main.app)
+        self.as_user("user_a")
+
+    def as_user(self, sub):
+        main.app.dependency_overrides[main.require_user] = lambda: {"sub": sub}
+
+    def body(self, **kw):
+        return {"title": "PTO questions", "domain": "hr", "prompt_id": None,
+                "messages": [{"role": "user", "content": "How many PTO days?"},
+                             {"role": "assistant", "content": "18 days [1].", "reply": {"contexts": [{"text": "18 days"}]}, "feedback": "up"}], **kw}
+
+    def test_save_list_load_round_trip_keeps_everything_the_page_stored(self):
+        self.assertEqual(self.c.put("/chats/chat_0001", json=self.body()).json(), {"saved": True})
+        listed = self.c.get("/chats").json()["chats"]
+        self.assertEqual([(c["id"], c["title"], c["domain"]) for c in listed], [("chat_0001", "PTO questions", "hr")])
+        chat = self.c.get("/chats/chat_0001").json()
+        self.assertEqual(chat["messages"][1]["feedback"], "up")
+        self.assertEqual(chat["messages"][1]["reply"]["contexts"][0]["text"], "18 days")
+
+    def test_saving_again_replaces_the_chat_instead_of_duplicating_it(self):
+        self.c.put("/chats/chat_0001", json=self.body())
+        self.c.put("/chats/chat_0001", json=self.body(title="Renamed"))
+        self.assertEqual([c["title"] for c in self.c.get("/chats").json()["chats"]], ["Renamed"])
+
+    def test_chats_are_private_to_their_owner(self):
+        self.c.put("/chats/chat_0001", json=self.body())
+        self.as_user("user_b")
+        self.assertEqual(self.c.get("/chats").json()["chats"], [])
+        self.assertEqual(self.c.get("/chats/chat_0001").status_code, 404)
+        self.assertEqual(self.c.put("/chats/chat_0001", json=self.body(title="Hijacked")).status_code, 404)
+        self.assertEqual(self.c.delete("/chats/chat_0001").status_code, 404)
+        self.as_user("user_a")  # and nothing of the above changed it
+        self.assertEqual(self.c.get("/chats/chat_0001").json()["title"], "PTO questions")
+
+    def test_delete(self):
+        self.c.put("/chats/chat_0001", json=self.body())
+        self.assertEqual(self.c.delete("/chats/chat_0001").json(), {"deleted": True})
+        self.assertEqual(self.c.get("/chats/chat_0001").status_code, 404)
+
+    def test_bad_input_is_rejected(self):
+        put = lambda cid="chat_0001", **kw: self.c.put(f"/chats/{cid}", json=self.body(**kw)).status_code
+        self.assertEqual(put(cid="x"), 400)  # too short an id
+        self.assertEqual(put(cid="bad id!!"), 400)
+        self.assertEqual(put(domain="nope"), 400)
+        self.assertEqual(put(messages=[]), 422)
+        self.assertEqual(put(messages=[{"role": "system", "content": "x"}]), 422)
+        self.assertEqual(put(messages=[{"role": "user"}]), 422)
+        self.assertEqual(put(title=""), 422)
+        self.assertEqual(put(messages=[{"role": "user", "content": "x" * 450_000}]), 413)
+
+    def test_only_the_newest_chats_are_kept(self):
+        with mock.patch.object(DatabaseManager, "MAX_CHATS_PER_USER", 3):
+            for i in range(5):
+                self.c.put(f"/chats/chat_000{i}", json=self.body(title=f"Chat {i}"))
+        self.assertEqual({c["title"] for c in self.c.get("/chats").json()["chats"]}, {"Chat 2", "Chat 3", "Chat 4"})
 
 
 if __name__ == "__main__":

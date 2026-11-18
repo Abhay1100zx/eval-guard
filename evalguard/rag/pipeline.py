@@ -1,7 +1,7 @@
 import time
 import re
 import json
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Iterator, Optional
 from evalguard.config import settings
 from evalguard.rag.vector_store import BaseVectorStore, get_vector_store
 from evalguard.metrics.performance import PerformanceTracker
@@ -18,9 +18,23 @@ class BaseLLMClient:
     def generate(self, prompt: str, system_prompt: Optional[str] = None) -> str:
         raise NotImplementedError
 
+    def stream_generate(self, prompt: str, system_prompt: Optional[str] = None) -> Iterator[str]:
+        """Yield the answer in pieces as the model writes it. Clients that can't stream yield it all at once."""
+        yield self.generate(prompt, system_prompt)
+
 
 class QuotaExceeded(RuntimeError):
     """A hard provider limit (e.g. OpenRouter free-models-per-day). Retrying or skipping questions can't help."""
+
+
+def _is_daily_limit(status: int, text: str) -> bool:
+    return status == 429 and bool(re.search(r"per[- ]?day|daily", text, re.IGNORECASE))  # also Gemini's "PerDay"
+
+
+def _daily_limit_error(text: str) -> QuotaExceeded:
+    return QuotaExceeded(
+        "The LLM provider's daily request limit is used up. Wait for the reset (OpenRouter resets at 00:00 UTC), "
+        "add credits, or switch LLM_PROVIDER. Provider said: " + text[:180])
 
 
 def _post_with_retry(url: str, *, headers=None, json_body=None, timeout=90, retries=4) -> dict:
@@ -36,13 +50,43 @@ def _post_with_retry(url: str, *, headers=None, json_body=None, timeout=90, retr
             if res.status_code not in (429, 500, 502, 503, 504):
                 res.raise_for_status()
                 return res.json()
-            if res.status_code == 429 and re.search(r"per[- ]?day|daily", res.text, re.IGNORECASE):  # also Gemini's "PerDay"
-                raise QuotaExceeded(
-                    "The LLM provider's daily request limit is used up. Wait for the reset (OpenRouter resets at 00:00 UTC), "
-                    "add credits, or switch LLM_PROVIDER. Provider said: " + res.text[:180])
+            if _is_daily_limit(res.status_code, res.text):
+                raise _daily_limit_error(res.text)
             last = RuntimeError(f"HTTP {res.status_code}: {res.text[:200]}")
         time.sleep(2 ** attempt * 2)
     raise RuntimeError(f"LLM request failed after {retries} attempts: {last}")
+
+
+def _open_stream(url: str, *, headers=None, json_body=None, timeout=(10, 120)):
+    """POST and return the open streaming response. No retries here: when a model is busy or out of quota the
+    fallback chain moves on to the next one, which is faster than waiting. Close the response when done."""
+    import requests
+    try:
+        res = requests.post(url, headers=headers, json=json_body, stream=True, timeout=timeout)
+    except requests.RequestException as e:
+        raise RuntimeError(f"Could not reach the model: {e}")
+    if res.status_code != 200:
+        text = res.text[:300]
+        res.close()
+        if _is_daily_limit(res.status_code, text):
+            raise _daily_limit_error(text)
+        raise RuntimeError(f"HTTP {res.status_code}: {text[:200]}")
+    res.encoding = "utf-8"
+    return res
+
+
+def _sse_json(res) -> Iterator[dict]:
+    """The JSON objects of a Server-Sent-Events response (`data: {...}` lines), until `[DONE]`."""
+    for line in res.iter_lines(decode_unicode=True):
+        if not line or not line.startswith("data:"):
+            continue  # blank separators and ": keep-alive" comments
+        payload = line[5:].strip()
+        if payload == "[DONE]":
+            return
+        try:
+            yield json.loads(payload)
+        except ValueError:
+            continue
 
 
 class OpenRouterLLMClient(BaseLLMClient):
@@ -68,6 +112,26 @@ class OpenRouterLLMClient(BaseLLMClient):
                 return content
         raise RuntimeError(f"OpenRouter model {self.model_name} returned empty content")
 
+    def stream_generate(self, prompt: str, system_prompt: Optional[str] = None) -> Iterator[str]:
+        messages = ([{"role": "system", "content": system_prompt}] if system_prompt else [])
+        messages.append({"role": "user", "content": prompt})
+        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+        res = _open_stream(f"{self.base_url}/chat/completions", headers=headers,
+                           json_body={"model": self.model_name, "messages": messages, "temperature": 0, "stream": True})
+        got = False
+        try:
+            for data in _sse_json(res):
+                if "error" in data:
+                    raise RuntimeError(f"OpenRouter error: {data['error']}")
+                piece = ((data.get("choices") or [{}])[0].get("delta") or {}).get("content")
+                if piece:
+                    got = True
+                    yield piece
+        finally:
+            res.close()
+        if not got:
+            raise RuntimeError(f"OpenRouter model {self.model_name} returned empty content")
+
 
 class GeminiLLMClient(BaseLLMClient):
     """Google Gemini via REST (no SDK dependency)."""
@@ -85,6 +149,24 @@ class GeminiLLMClient(BaseLLMClient):
             json_body={"contents": [{"parts": [{"text": full_prompt}]}]},
         )
         return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+    def stream_generate(self, prompt: str, system_prompt: Optional[str] = None) -> Iterator[str]:
+        full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:streamGenerateContent?alt=sse"
+        res = _open_stream(url, headers={"Content-Type": "application/json", "x-goog-api-key": self.api_key},
+                           json_body={"contents": [{"parts": [{"text": full_prompt}]}]})
+        got = False
+        try:
+            for data in _sse_json(res):
+                parts = ((data.get("candidates") or [{}])[0].get("content") or {}).get("parts") or []
+                piece = "".join(p.get("text", "") for p in parts)
+                if piece:
+                    got = True
+                    yield piece
+        finally:
+            res.close()
+        if not got:
+            raise RuntimeError(f"Gemini model {self.model_name} returned empty content")
 
 
 class OllamaLLMClient(BaseLLMClient):
@@ -113,6 +195,34 @@ class OllamaLLMClient(BaseLLMClient):
             timeout=120, retries=1,  # a local model that timed out once is just slow; retrying would hang the request for minutes
         )
         return data.get("response", "").strip()
+
+    def stream_generate(self, prompt: str, system_prompt: Optional[str] = None) -> Iterator[str]:
+        res = _open_stream(
+            f"{self.base_url}/api/generate",
+            json_body={"model": self.model_name, "prompt": prompt, "system": system_prompt or "", "stream": True,
+                       "options": {"num_ctx": settings.OLLAMA_NUM_CTX}, "keep_alive": "30s"},
+            timeout=(5, 120),
+        )
+        got = False
+        try:
+            for line in res.iter_lines(decode_unicode=True):  # newline-delimited JSON, not SSE
+                if not line:
+                    continue
+                try:
+                    data = json.loads(line)
+                except ValueError:
+                    continue
+                if data.get("error"):
+                    raise RuntimeError(f"Ollama error: {str(data['error'])[:200]}")
+                if data.get("response"):
+                    got = True
+                    yield data["response"]
+                if data.get("done"):
+                    break
+        finally:
+            res.close()
+        if not got:
+            raise RuntimeError(f"Ollama model {self.model_name} returned empty content")
 
 
 class MockLLMClient(BaseLLMClient):
@@ -147,6 +257,9 @@ class MockLLMClient(BaseLLMClient):
             if sentences:
                 return "Based on the provided documentation: " + ". ".join(sentences[:2]) + "."
         return "Based on the provided guidelines, the relevant policy applies as specified in the context."
+
+    def stream_generate(self, prompt: str, system_prompt: Optional[str] = None) -> Iterator[str]:
+        yield from re.findall(r"\S+\s*", self.generate(prompt, system_prompt))  # word by word, like a real stream
 
 
 def _has_key(key: str) -> bool:
@@ -199,10 +312,37 @@ class FallbackLLMClient(BaseLLMClient):
             else:
                 self.model_name = c.model_name
                 return out
-        any_quota = bool(self._quota_hit)
+        raise self._all_failed()
+
+    def stream_generate(self, prompt: str, system_prompt: Optional[str] = None) -> Iterator[str]:
+        """Same fallback as generate(), but only until the first piece arrives: a half-written answer can't be
+        handed to another model, so a failure after that point is raised to the caller (who keeps what it got)."""
+        for c in self.clients:
+            if type(c) in self._quota_hit:
+                continue
+            started = False
+            try:
+                for piece in c.stream_generate(prompt, system_prompt):
+                    if not started:
+                        started = True
+                        self.model_name = c.model_name
+                    yield piece
+                return
+            except QuotaExceeded:
+                if started:
+                    raise
+                self._quota_hit.add(type(c))
+                self._skip(f"{c.model_name}: daily limit used up")
+            except Exception as e:
+                if started:
+                    raise
+                self._skip(f"{c.model_name}: {str(e)[:90]}")
+        raise self._all_failed()
+
+    def _all_failed(self) -> RuntimeError:
         msg = ("Every available model failed. " + " | ".join(self.skipped)
                + ". Free daily limits reset at 00:00 UTC; or add a Gemini key / start Ollama as a backup.")
-        raise (QuotaExceeded if any_quota else RuntimeError)(msg)
+        return (QuotaExceeded if self._quota_hit else RuntimeError)(msg)
 
 
 def get_chat_client(role: str = "answer") -> BaseLLMClient:

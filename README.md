@@ -12,6 +12,8 @@ It covers 8 industries: Education, Healthcare, Banking and Finance, Legal, E-com
 - **Spot drops** automatically by comparing every run with the last comparable one (KS statistical test).
 - **Compare prompts** (instruction wordings) or **compare AI models** on the same questions, side by side.
 - **Test trick questions**: out-of-scope questions and hidden instructions (prompt injection).
+- **Chat with the chatbot** yourself: answers stream in with clickable source citations, you can score them, rate them 👍/👎 and turn any exchange into a test question. Chats are saved per user, and a backup model takes over when the free daily limit runs out.
+- **Run on a schedule and get alerted**: one domain at a time on a small sample (domains with no real score yet go first), with a Slack, Discord or email message when quality drops.
 - **Add your own test questions** and upload your own documents.
 - **Sign in securely** with Clerk. Every API call is checked.
 
@@ -122,7 +124,7 @@ docs/           Guides and demo material
 
 ## Honest limits
 
-- Runs are started by hand. Scheduled runs and alerts are the next step.
+- Scheduled runs and drift alerts exist but are **off until you set them in `.env`** (see the user guide). With the free model allowance (about 50 calls a day) a scheduled run uses a small sample, so one run is only a hint.
 - 30 standard questions per domain is a small sample, so small score changes can be luck. The app says so.
 - The trick-question safety check looks for phrases, so a clever answer could slip past it.
 - Free AI models are limited per day and change over time. If you hit the daily limit, wait for 00:00 UTC, add credit on OpenRouter, or switch `LLM_PROVIDER` in `.env`.
@@ -135,4 +137,4 @@ docs/           Guides and demo material
 .venv\Scripts\python.exe -m pytest tests -q
 ```
 
-61 tests run without internet or a real AI. They cover scoring, drift, safe comparison rules, sign-in token checks, prompts, experiments, custom questions and browser access rules (CORS).
+140 tests run without internet or a real AI. They cover scoring, drift, safe comparison rules, sign-in token checks, prompts, experiments, custom questions, browser access rules (CORS), the streaming chat and its backup models, saved chats (including that users can't see each other's), scheduled runs and drift alerts.

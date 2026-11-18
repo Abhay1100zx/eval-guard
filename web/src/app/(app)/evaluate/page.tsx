@@ -3,8 +3,83 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useApi, useFetch } from "@/lib/api";
-import type { Job, PromptVersion } from "@/lib/types";
-import { Badge, Button, Card, ErrorBox, LiveDot, MockBanner, PageHeader, ScorerBadge, domainLabel, inputCls, pct, useDomains } from "@/components/ui";
+import type { Job, PromptVersion, Schedule } from "@/lib/types";
+import { Badge, Button, Card, ErrorBox, LiveDot, MockBanner, PageHeader, ScorerBadge, domainLabel, fmtDate, inputCls, pct, useDomains } from "@/components/ui";
+
+/** Whether scheduled runs and drift alerts are on, what ran last, and a button to prove alerts reach you. */
+function ScheduleCard() {
+  const api = useApi();
+  const { byKey } = useDomains();
+  const { data: s, error: loadError } = useFetch<Schedule>("/schedule");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState<Record<string, string> | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
+
+  async function testAlert() {
+    setSending(true); setSent(null); setTestError(null);
+    try {
+      setSent((await api<{ results: Record<string, string> }>("/alerts/test", { method: "POST" })).results);
+    } catch (e) {
+      setTestError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (loadError) return <Card title="Schedule & drift alerts" className="mt-4"><p className="text-sm text-muted">Couldn&apos;t load the schedule: {loadError}</p></Card>;
+  if (!s) return <Card title="Schedule & drift alerts" className="mt-4"><p className="text-sm text-muted">Loading…</p></Card>;
+  const channels = [s.alerts.webhook && "Slack/Discord webhook", s.alerts.email && "email"].filter(Boolean) as string[];
+  const last = s.last_result;
+  return (
+    <Card title="Schedule & drift alerts" className="mt-4">
+      <div className="grid gap-5 md:grid-cols-2">
+        <div className="space-y-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">Scheduled runs</span>
+            <Badge tone={s.enabled ? "good" : "neutral"}>{s.enabled ? `on · every ${s.hours} h · ${s.questions} questions` : "off"}</Badge>
+          </div>
+          {s.enabled ? (
+            <>
+              <p className="text-muted">
+                Next: {s.next_domain ? domainLabel(byKey, s.next_domain) : "—"}{s.next_due_at ? ` · due ${fmtDate(s.next_due_at)}` : ""}. Each run evaluates the one domain whose last AI-judged score is oldest (domains with none go first), so the free daily quota isn&apos;t used up at once.
+              </p>
+              {last && (
+                <p className="text-muted">
+                  Last: {domainLabel(byKey, last.domain)} · <Badge tone={last.status === "SUCCESS" ? "good" : "bad"}>{last.status}</Badge>
+                  {last.drift && <> · <Badge tone={last.drift === "HEALTHY" ? "good" : "bad"}>{last.drift}</Badge></>}
+                  {last.run_id && <> · <Link href={`/runs/${last.run_id}`} className="text-accent hover:underline">view run</Link></>}
+                  {last.error && <span className="text-bad"> · {last.error}</span>}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-muted">
+              Set <code className="rounded bg-surface-2 px-1">EVALGUARD_SCHEDULE_HOURS</code> (for example 24) in the API&apos;s <code className="rounded bg-surface-2 px-1">.env</code> and restart it. It then runs one domain on a small sample every so often, starting with domains that have no AI-judged score yet.
+            </p>
+          )}
+        </div>
+        <div className="space-y-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">Drift alerts</span>
+            <Badge tone={channels.length ? "good" : "neutral"}>{channels.length ? `on · ${channels.join(" + ")}` : "off"}</Badge>
+          </div>
+          <p className="text-muted">
+            {channels.length
+              ? "Whenever a run finds drift (manual or scheduled), a message says which scores dropped and links to the run."
+              : "Put a Slack or Discord webhook in ALERT_WEBHOOK_URL (or the ALERT_SMTP_* settings and ALERT_EMAIL_TO for email) in the API's .env and restart it."}
+          </p>
+          <Button variant="ghost" className="!px-3 !py-1.5 text-xs" onClick={testAlert} disabled={sending || !channels.length}>{sending ? "Sending…" : "Send test alert"}</Button>
+          {sent && (
+            <ul className="text-xs" role="status">
+              {Object.entries(sent).map(([ch, r]) => <li key={ch}>{ch}: <span className={r === "sent" ? "text-good" : "text-bad"}>{r}</span></li>)}
+            </ul>
+          )}
+          {testError && <p role="alert" className="text-xs text-bad">{testError}</p>}
+        </div>
+      </div>
+    </Card>
+  );
+}
 
 export default function Evaluate() {
   const api = useApi();
@@ -97,6 +172,8 @@ export default function Evaluate() {
           <Button variant="ghost" disabled={active} onClick={() => start("/evaluate/all")}>⚡ Evaluate all {domains.length || 8} domains</Button>
         </Card>
       </div>
+
+      <ScheduleCard />
 
       {error && <div className="mt-6"><ErrorBox message={error} /></div>}
 

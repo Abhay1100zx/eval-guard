@@ -59,6 +59,21 @@ class Settings:
     # Ollama reserves memory for its whole context window; a RAG prompt needs ~1,200 tokens, and the default (4096+) fails on small machines
     OLLAMA_NUM_CTX: int = int(os.getenv("OLLAMA_NUM_CTX", "2048"))
 
+    # Scheduled runs: every SCHEDULE_HOURS the domain with the oldest real score is evaluated on a small sample (0 = off).
+    # Free models allow ~50 calls a day and one question costs 3 calls, so keep the sample small.
+    SCHEDULE_HOURS: float = float(os.getenv("EVALGUARD_SCHEDULE_HOURS", "0") or 0)
+    SCHEDULE_QUESTIONS: int = int(os.getenv("EVALGUARD_SCHEDULE_QUESTIONS", "6") or 6)
+
+    # Drift alerts (all optional). A Slack/Discord-style webhook and/or email.
+    WEB_URL: str = os.getenv("EVALGUARD_WEB_URL", "").rstrip("/")  # makes alerts link to the run page
+    ALERT_WEBHOOK_URL: str = os.getenv("ALERT_WEBHOOK_URL", "")
+    ALERT_SMTP_HOST: str = os.getenv("ALERT_SMTP_HOST", "")
+    ALERT_SMTP_PORT: int = int(os.getenv("ALERT_SMTP_PORT", "587") or 587)
+    ALERT_SMTP_USER: str = os.getenv("ALERT_SMTP_USER", "")
+    ALERT_SMTP_PASSWORD: str = os.getenv("ALERT_SMTP_PASSWORD", "")
+    ALERT_EMAIL_FROM: str = os.getenv("ALERT_EMAIL_FROM", "")
+    ALERT_EMAIL_TO: str = os.getenv("ALERT_EMAIL_TO", "")
+
     # Embeddings & ChromaDB (strictly resolved to BASE_DIR regardless of CWD)
     EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
     CHROMA_PERSIST_DIR: str = _resolve_config_path("CHROMA_PERSIST_DIR", "data/chroma_db")

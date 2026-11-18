@@ -1,8 +1,13 @@
+import json
+import logging
+import re
 import sys
+import threading
 import time
 import uuid
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 # Ensure evalguard package is in Python search path
@@ -14,24 +19,40 @@ from typing import Optional, List, Literal
 import requests
 from fastapi import FastAPI, HTTPException, UploadFile, File, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from evalguard import alerts, scheduler
 from evalguard.config import settings, utcnow_iso
 from evalguard.auth import require_user, auth_disabled
 from evalguard.runner import EvaluationRunner
 from evalguard.storage.database import DatabaseManager
 from evalguard.rag.pipeline import QuotaExceeded, RAGPipeline, get_chat_client, get_llm_client
-from evalguard.rag.vector_store import get_vector_store
+from evalguard.rag.vector_store import get_vector_store, warm_up
 from evalguard.metrics.faithfulness import FaithfulnessEvaluator
 from evalguard.metrics.relevance import RelevanceEvaluator
 from evalguard.drift.detector import DriftDetector
 from evalguard.domains import DOMAINS_REGISTRY, DOMAIN_DISPLAY_NAMES
 from evalguard.dataset import keywords_missing, load_builtin, normalize_item
 
+log = logging.getLogger("evalguard.api")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    stop = threading.Event()
+    threading.Thread(target=_warm_up, daemon=True, name="warm-up").start()  # so the first chat doesn't pay for loading the model
+    if settings.SCHEDULE_HOURS > 0:
+        threading.Thread(target=scheduler.run_forever, args=(stop, _scheduled_tick), daemon=True, name="scheduler").start()
+    yield
+    stop.set()
+
+
 app = FastAPI(
     title="EvalGuard AI API",
     description="Multi-domain RAG evaluation, benchmarking and drift detection. All routes except /health require a Clerk session token.",
-    version="3.0.0"
+    version="3.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -82,6 +103,10 @@ def _run_job(job: dict, run_name: Optional[str], baseline_run_id: Optional[str],
                                        "drift_report": out["drift_report"],
                                        "drift_skipped_reason": out["drift_skipped_reason"],
                                        "skipped": out["skipped"]})
+                try:  # tell people when quality dropped; a failing webhook must not fail the run
+                    job["results"][-1]["alerts"] = alerts.notify_drift(out["run"], out["drift_report"])
+                except Exception:
+                    log.exception("drift alert failed")
             except Exception as e:  # one failing domain must not abort a batch
                 job["results"].append({"domain": dom, "status": "FAILED", "error": str(e)})
             job["progress"]["domains_done"] += 1
@@ -93,6 +118,26 @@ def _run_job(job: dict, run_name: Optional[str], baseline_run_id: Optional[str],
         job["status"], job["error"] = "failed", str(e)
     finally:
         job["finished_at"] = utcnow_iso()
+
+
+def _warm_up() -> None:
+    try:
+        warm_up(settings.EMBEDDING_MODEL)
+    except Exception:
+        log.exception("could not pre-load the embedding model; the first request will load it instead")
+
+
+def _run_scheduled(domain: str, questions: int) -> dict:
+    """Run one scheduled evaluation through the same single-worker queue as manual runs, and wait for it."""
+    job = _new_job("scheduled", [domain])
+    _executor.submit(_run_job, job, f"Scheduled · {domain} · {utcnow_iso()[:10]}", None,
+                     {"suite": "standard", "question_limit": questions}).result()
+    return job["results"][0] if job["results"] else {"status": "FAILED", "error": job.get("error") or "no result"}
+
+
+def _scheduled_tick():
+    return scheduler.tick(db, hours=settings.SCHEDULE_HOURS, questions=settings.SCHEDULE_QUESTIONS,
+                          domains=list(DOMAINS_REGISTRY), run_domain=_run_scheduled)
 
 
 def _validate_domain(domain: str) -> str:
@@ -301,9 +346,59 @@ class ChatScoreRequest(BaseModel):
     contexts: List[str] = Field(default_factory=list, max_length=10)
 
 
-@app.post("/chat", dependencies=protected)
-def chat(req: ChatRequest):
-    """One chat turn against a domain's documents. Costs ONE model call; scoring is a separate, optional call."""
+# A follow-up only makes sense with the conversation before it when it is short or leans on a pronoun ("and rollover?",
+# "what about it?"). Only those get a model-written standalone version; the rest are searched as typed, which saves a call.
+_FOLLOWUP_HINT = re.compile(r"^(and|or|but|so|then|also|what about|how about|why)\b|\b(it|its|that|this|they|them|their|those|these|he|she|there)\b", re.I)
+
+
+def _needs_context(question: str) -> bool:
+    n = len(question.split())
+    return n <= 8 or (n <= 14 and bool(_FOLLOWUP_HINT.search(question)))
+
+
+def _history_text(history) -> str:
+    return "\n".join(f"{'User' if m.role == 'user' else 'Assistant'}: {m.content[:400]}" for m in history)
+
+
+def _rewrite_question(llm, history, question: str) -> str:
+    """Ask the model to turn a follow-up into a question that stands on its own (one extra call)."""
+    prompt = (f"Conversation so far:\n{_history_text(history)}\n\nLast question: {question}\n\n"
+              "Rewrite the last question so it can be understood on its own, without the conversation. "
+              "Keep every name, number and topic it depends on. Reply with only the rewritten question.")
+    out = (llm.generate(prompt=prompt, system_prompt="You rewrite follow-up questions as standalone questions.") or "").strip()
+    out = out.splitlines()[0].strip().strip('"').strip() if out else ""
+    if not 5 <= len(out) <= 300:
+        raise ValueError("unusable rewrite")
+    return out
+
+
+def _search_query(llm, messages, question: str) -> str:
+    """What to search the documents for. Normally the question as typed."""
+    users = [m.content for m in messages if m.role == "user"]
+    if len(users) < 2 or not _needs_context(question):
+        return question
+    if not llm.is_mock:
+        try:
+            return _rewrite_question(llm, messages[:-1][-6:], question)
+        except Exception:  # a failed rewrite must never stop the answer
+            pass
+    return f"{users[-2]} {question}"  # fallback: the previous question plus this one
+
+
+def _chat_prompt(question: str, contexts, history) -> str:
+    """Numbered passages plus an instruction to cite them, so the page can link [1], [2] to the sources."""
+    passages = "\n\n".join(f"[{i}] {c['text']}" for i, c in enumerate(contexts, 1))
+    prompt = (f"Context:\n{passages}\n\nQuestion: {question}\n\n"
+              "Cite the numbered passages you used in square brackets, like [1] or [2], right after the sentence they support. "
+              "Do not cite a passage you did not use.\n\nAnswer:")
+    if history:
+        prompt = ("Conversation so far (for reference only; answer only from the context below):\n"
+                  f"{_history_text(history)}\n\n{prompt}")
+    return prompt
+
+
+def _prepare_chat(req: ChatRequest):
+    """Everything before the model answers: validate, find the question to search for, retrieve, build the prompt."""
     dom = _validate_domain(req.domain)
     if req.messages[-1].role != "user":
         raise HTTPException(422, "The last message must be from the user")
@@ -317,22 +412,22 @@ def chat(req: ChatRequest):
 
     runner = EvaluationRunner(domain=dom, **kwargs)
     runner.ensure_indexed()
-
-    question = req.messages[-1].content
-    users = [m.content for m in req.messages if m.role == "user"]
-    # A short follow-up ("and the rollover?") has no topic of its own, so search with the previous question too.
-    query = f"{users[-2]} {question}" if len(users) > 1 and len(question.split()) <= 6 else question
-    history = req.messages[:-1][-6:]
-
     llm = get_chat_client("answer")  # falls back to other free models when the first one is out of quota
-    t0 = time.perf_counter()
+    question = req.messages[-1].content
     try:
+        query = _search_query(llm, req.messages, question)
         contexts = runner.rag_pipeline.retrieve(query, top_k=req.top_k)
-        prompt = runner.rag_pipeline.format_prompt(question, contexts)
-        if history:
-            convo = "\n".join(f"{'User' if m.role == 'user' else 'Assistant'}: {m.content}" for m in history)
-            prompt = ("Conversation so far (for reference only; answer only from the context below):\n"
-                      f"{convo}\n\n{prompt}")
+    except Exception as e:
+        raise HTTPException(502, f"Could not search the documents: {e}")
+    return runner, llm, query, contexts, _chat_prompt(question, contexts, req.messages[:-1][-6:])
+
+
+@app.post("/chat", dependencies=protected)
+def chat(req: ChatRequest):
+    """One chat turn against a domain's documents (whole answer at once). The page uses /chat/stream instead."""
+    t0 = time.perf_counter()
+    runner, llm, query, contexts, prompt = _prepare_chat(req)
+    try:
         answer = llm.generate(prompt=prompt, system_prompt=runner.system_prompt)
     except QuotaExceeded as e:
         raise HTTPException(429, str(e))
@@ -351,6 +446,39 @@ def chat(req: ChatRequest):
     }
 
 
+def _line(event: dict) -> str:
+    return json.dumps(event, ensure_ascii=False) + "\n"
+
+
+@app.post("/chat/stream", dependencies=protected)
+def chat_stream(req: ChatRequest):
+    """Same turn as /chat, but sent as it is written: one JSON object per line.
+    {"type":"meta"} the sources and the search used, {"type":"token"} a piece of the answer, then {"type":"done"}
+    with the model that answered, or {"type":"error"} (the HTTP status is already 200 by then, so it carries its own)."""
+    t0 = time.perf_counter()
+    runner, llm, query, contexts, prompt = _prepare_chat(req)  # input errors still come back as normal HTTP errors
+
+    def events():
+        yield _line({"type": "meta", "contexts": contexts, "retrieval_query": query})
+        parts: List[str] = []
+        try:
+            for piece in llm.stream_generate(prompt=prompt, system_prompt=runner.system_prompt):
+                parts.append(piece)
+                yield _line({"type": "token", "text": piece})
+        except QuotaExceeded as e:
+            yield _line({"type": "error", "status": 429, "message": str(e)})
+            return
+        except Exception as e:
+            yield _line({"type": "error", "status": 502, "message": f"LLM provider error: {e}"})
+            return
+        yield _line({"type": "done", "answer": "".join(parts), "model": llm.model_name,
+                     "notes": getattr(llm, "skipped", []), "latency_ms": round((time.perf_counter() - t0) * 1000, 1),
+                     "prompt_name": runner.prompt_name, "is_mock": bool(llm.is_mock)})
+
+    return StreamingResponse(events(), media_type="application/x-ndjson",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
 @app.post("/chat/score", dependencies=protected)
 def chat_score(req: ChatScoreRequest):
     """Optional: have the judge model mark one chat answer (two model calls)."""
@@ -364,6 +492,77 @@ def chat_score(req: ChatScoreRequest):
         raise HTTPException(502, f"Scoring failed: {e}")
     return {"faithfulness": faith, "relevance": rel, "is_mock": bool(judge.is_mock),
             "judge_model": judge.model_name, "notes": getattr(judge, "skipped", [])}
+
+
+# ---------------------------------------------------------------- saved chats (each user sees only their own)
+class ChatSave(BaseModel):
+    title: str = Field(..., min_length=1, max_length=120)
+    domain: str
+    prompt_id: Optional[str] = Field(default=None, max_length=64)
+    messages: List[dict] = Field(..., min_length=1, max_length=80)
+
+
+_CHAT_ID = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
+MAX_CHAT_BYTES = 400_000
+
+
+@app.get("/chats")
+def list_saved_chats(user: dict = Depends(require_user)):
+    return {"chats": db.list_chats(user["sub"])}
+
+
+@app.get("/chats/{chat_id}")
+def get_saved_chat(chat_id: str, user: dict = Depends(require_user)):
+    chat = db.get_chat(user["sub"], chat_id)
+    if not chat:
+        raise HTTPException(404, "Chat not found")
+    return chat
+
+
+@app.put("/chats/{chat_id}")
+def save_chat(chat_id: str, body: ChatSave, user: dict = Depends(require_user)):
+    """Create or replace a chat. The id is chosen by the page, so saving needs no round trip first."""
+    if not _CHAT_ID.match(chat_id):
+        raise HTTPException(400, "Chat id must be 8-64 letters, digits, - or _")
+    dom = _validate_domain(body.domain)
+    if any(m.get("role") not in ("user", "assistant") or not isinstance(m.get("content"), str) for m in body.messages):
+        raise HTTPException(422, "Every message needs a role (user or assistant) and text content")
+    if len(json.dumps(body.messages)) > MAX_CHAT_BYTES:
+        raise HTTPException(413, "This chat is too large to save; start a new one")
+    if not db.save_chat(user["sub"], chat_id, body.title.strip(), dom, body.prompt_id, body.messages):
+        raise HTTPException(404, "Chat not found")  # the id belongs to someone else; say nothing more
+    return {"saved": True}
+
+
+@app.delete("/chats/{chat_id}")
+def delete_saved_chat(chat_id: str, user: dict = Depends(require_user)):
+    if not db.delete_chat(user["sub"], chat_id):
+        raise HTTPException(404, "Chat not found")
+    return {"deleted": True}
+
+
+# ---------------------------------------------------------------- scheduled runs and drift alerts
+@app.get("/schedule", dependencies=protected)
+def get_schedule():
+    return {**scheduler.status(db, hours=settings.SCHEDULE_HOURS, questions=settings.SCHEDULE_QUESTIONS,
+                               domains=list(DOMAINS_REGISTRY)),
+            "alerts": alerts.channels()}
+
+
+_last_test_alert = 0.0
+
+
+@app.post("/alerts/test", dependencies=protected)
+def send_test_alert():
+    """Send a harmless message through every configured channel so you can see alerts reach you."""
+    global _last_test_alert
+    if not any(alerts.channels().values()):
+        raise HTTPException(400, "No alert channel is set up. Put a Slack/Discord webhook in ALERT_WEBHOOK_URL, or the ALERT_SMTP_* "
+                                 "settings plus ALERT_EMAIL_TO, in the API's .env and restart it.")
+    if time.time() - _last_test_alert < 30:
+        raise HTTPException(429, "A test alert was just sent; wait a few seconds")
+    _last_test_alert = time.time()
+    return {"results": alerts.send_alert("✅ EvalGuard test alert", "If you can read this, drift alerts will reach you.")}
 
 
 @app.post("/domains/{domain}/documents", dependencies=protected)

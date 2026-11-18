@@ -120,6 +120,11 @@ class DatabaseManager:
                 id TEXT PRIMARY KEY, name TEXT NOT NULL, kind TEXT NOT NULL, domain TEXT NOT NULL,
                 suite TEXT NOT NULL, question_limit INTEGER, status TEXT NOT NULL,
                 variants TEXT NOT NULL, created_at TEXT NOT NULL, error TEXT)""")
+            cursor.execute("""CREATE TABLE IF NOT EXISTS chat_sessions (
+                id TEXT PRIMARY KEY, user_id TEXT NOT NULL, title TEXT NOT NULL, domain TEXT NOT NULL,
+                prompt_id TEXT, messages TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)""")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_user ON chat_sessions (user_id, updated_at)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
             if not cursor.execute("SELECT 1 FROM prompt_versions WHERE is_default = 1").fetchone():
                 cursor.execute(
                     "INSERT OR IGNORE INTO prompt_versions (id, name, system_prompt, created_at, is_default) VALUES (?, ?, ?, ?, 1)",
@@ -431,3 +436,57 @@ class DatabaseManager:
         with self._get_connection() as conn:
             rows = conn.execute("SELECT * FROM eval_runs WHERE experiment_id = ? ORDER BY timestamp", (exp_id,)).fetchall()
             return [dict(r) for r in rows]
+
+    # ------------------------------------------------------------------ saved chats (private to the user who made them)
+    MAX_CHATS_PER_USER = 100
+
+    def list_chats(self, user_id: str, limit: int = 100) -> List[Dict[str, Any]]:
+        with self._get_connection() as conn:
+            rows = conn.execute(
+                "SELECT id, title, domain, updated_at FROM chat_sessions WHERE user_id = ? ORDER BY updated_at DESC LIMIT ?",
+                (user_id, limit)).fetchall()
+            return [dict(r) for r in rows]
+
+    def get_chat(self, user_id: str, chat_id: str) -> Optional[Dict[str, Any]]:
+        with self._get_connection() as conn:
+            row = conn.execute("SELECT * FROM chat_sessions WHERE id = ? AND user_id = ?", (chat_id, user_id)).fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        d["messages"] = json.loads(d["messages"])
+        return d
+
+    def save_chat(self, user_id: str, chat_id: str, title: str, domain: str, prompt_id: Optional[str],
+                  messages: List[Dict[str, Any]]) -> bool:
+        """Create or overwrite one chat. False if the id belongs to someone else (it is never touched)."""
+        now = utcnow_iso()
+        with self._get_connection() as conn:
+            owner = conn.execute("SELECT user_id FROM chat_sessions WHERE id = ?", (chat_id,)).fetchone()
+            if owner and owner["user_id"] != user_id:
+                return False
+            if owner:
+                conn.execute("UPDATE chat_sessions SET title = ?, domain = ?, prompt_id = ?, messages = ?, updated_at = ? WHERE id = ?",
+                             (title, domain, prompt_id, json.dumps(messages), now, chat_id))
+            else:
+                conn.execute(
+                    "INSERT INTO chat_sessions (id, user_id, title, domain, prompt_id, messages, created_at, updated_at)"
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (chat_id, user_id, title, domain, prompt_id, json.dumps(messages), now, now))
+                conn.execute(  # keep only the newest MAX_CHATS_PER_USER
+                    "DELETE FROM chat_sessions WHERE user_id = ? AND id NOT IN "
+                    "(SELECT id FROM chat_sessions WHERE user_id = ? ORDER BY updated_at DESC LIMIT ?)",
+                    (user_id, user_id, self.MAX_CHATS_PER_USER))
+        return True
+
+    def delete_chat(self, user_id: str, chat_id: str) -> bool:
+        with self._get_connection() as conn:
+            return conn.execute("DELETE FROM chat_sessions WHERE id = ? AND user_id = ?", (chat_id, user_id)).rowcount > 0
+
+    # ------------------------------------------------------------------ small key/value store (scheduler state)
+    def kv_get(self, key: str, default: Optional[str] = None) -> Optional[str]:
+        with self._get_connection() as conn:
+            row = conn.execute("SELECT value FROM kv WHERE key = ?", (key,)).fetchone()
+            return row["value"] if row else default
+
+    def kv_set(self, key: str, value: str) -> None:
+        with self._get_connection() as conn:
+            conn.execute("INSERT INTO kv (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", (key, value))

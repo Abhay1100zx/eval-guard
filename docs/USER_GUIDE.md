@@ -84,13 +84,17 @@ With few questions the test is not very sensitive, so treat small changes as hin
 
 Talk to the chatbot the way your users would. Good for trying something without running the full set.
 
-1. Pick a **domain** (the set of documents to answer from) and, if you like, a **system prompt** from your library. Changing either one starts a fresh conversation.
-2. Press one of the starter questions or type your own. **Enter** sends, **Shift+Enter** adds a new line. Follow-up questions work: the chatbot sees the last few turns.
-3. Under each answer you can open **Sources used** to see exactly which pieces of the documents it was given.
-4. Press **Score this answer** to have the judge AI mark it for faithfulness (is it backed by the sources?) and relevance (does it answer the question?). A red *mock* label means the marks are fake.
-5. Press **Save as test case** to turn a good (or bad) exchange into a permanent test question. Check the expected answer against the documents first, and make the question stand on its own, because test questions are asked without the chat history. It is used in the next run for that domain.
+1. Pick a **domain** (the set of documents to answer from) and, if you like, a **system prompt** from your library. Changing either one starts a new chat; the old one stays in **History**.
+2. Press one of the starter questions or type your own. **Enter** sends, **Shift+Enter** adds a new line. The answer appears **as it is written**, with formatting (bold, lists, tables). **■ Stop** cuts it short and keeps what was written.
+3. Follow-up questions work: the chatbot sees the last few turns. A short follow-up such as "and rollover?" is first rewritten into a question that stands on its own, and the line *Searched the documents for: …* shows what was actually looked up.
+4. The numbers in the answer, like **[1]** and **[2]**, are citations. Click one to open the passage it came from under **Sources used**.
+5. Under each answer: **Copy**, **↻ Regenerate** (a fresh answer to the same question), and **👍 / 👎**. A thumb marks the answer and opens the test-case form: 👍 offers the answer as the expected one, 👎 asks you to type the right one, so a mistake like that can never come back unnoticed.
+6. Press **Score this answer** to have the judge AI mark it for faithfulness (is it backed by the sources?) and relevance (does it answer the question?). A red *mock* label means the marks are fake.
+7. Press **Save as test case** to turn any exchange into a permanent test question. Check the expected answer against the documents first, and make the question stand on its own, because test questions are asked without the chat history. It is used in the next run for that domain.
 
-Every message uses one call to the answer model. Scoring uses two more. OpenRouter's free models allow only about 50 calls a day for the whole account, so score just the answers you care about.
+**History** (left side) saves every chat automatically, and only you can see yours. Click one to continue it, ✕ to delete it. The newest 100 are kept.
+
+Every message uses one call to the answer model; a follow-up that needs rewriting uses one more. Scoring uses two more. OpenRouter's free models allow only about 50 calls a day for the whole account, so score just the answers you care about.
 
 **When the daily limit is used up**, the chat does not stop. It quietly switches to a backup and tells you: the answer gets a yellow **backup model** label and a line saying which model was skipped and why. Backups are tried in this order, and only the ones you have set up are used:
 
@@ -110,6 +114,15 @@ Starts a run.
 - **All domains:** runs every domain one after another. A domain that fails doesn't stop the others.
 
 A progress bar shows which question it's on. Free AI models are slow and rate-limited, so a full domain (30 questions) takes about 10 minutes. Use the limit for a quick check. When it finishes you see the scores and whether drift was found.
+
+#### Scheduled runs and drift alerts
+
+The **Schedule & drift alerts** card on this page shows whether these two helpers are on. Both are off until you set them in the API's `.env` file and restart it.
+
+- **Scheduled runs.** Set `EVALGUARD_SCHEDULE_HOURS` (for example `24`). Every so often the API evaluates **one** domain on a small sample (`EVALGUARD_SCHEDULE_QUESTIONS`, default 6). It always picks the domain whose last AI-judged score is the oldest, so **domains that have never had a real score go first**. That fills in the gaps one by one without using up the free daily quota at once (one question costs 3 calls, and the free allowance is about 50 calls a day). After every domain has a real score, the oldest gets refreshed, and that is when drift can be spotted. A run that fails (for example the daily limit is used up) waits for the next turn instead of retrying. The schedule is remembered, so restarting the API neither skips nor repeats a run.
+- **Drift alerts.** When any run (yours or scheduled) finds drift, a message names the scores that dropped and links to the run. Set `ALERT_WEBHOOK_URL` to a **Slack** or **Discord** incoming-webhook address, and/or the `ALERT_SMTP_*` settings plus `ALERT_EMAIL_TO` for **email**. Set `EVALGUARD_WEB_URL` (for example `https://eval-guard.vercel.app`) so the message can link to the run. **Send test alert** proves it works.
+
+A scheduled run uses a small, fixed sample, so a single run is only a hint. The more runs a domain has, the more a drift alert means.
 
 ### Experiments
 
